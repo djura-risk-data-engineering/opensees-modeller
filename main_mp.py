@@ -7,11 +7,12 @@ if __name__ == "__main__":
     outputs_dir = path / "out"
     gmdir = path / "records"
 
-    gmfilenames = ["GMR_H1_names.txt", "GMR_H2_names.txt", "GMR_dts.txt"]
+    # gmfilenames = ["GMR_H1_names.txt", "GMR_H2_names.txt", "GMR_dts.txt"]
+    gmfilenames = ["GMR_names.txt", "GMR_names.txt", "GMR_dts.txt"]
 
     model = RCMRF(
         analysis_options=["msa"],
-        workers=1,
+        workers=2,
         export_dir=outputs_dir,
         gm_folder=gmdir,
         gm_filenames=gmfilenames,
