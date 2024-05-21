@@ -85,7 +85,7 @@ def remove_directory_contents(directory: Path):
     if not directory.exists():
         return
 
-    for item in directory.glob('*'):
+    for item in directory.glob("*"):
         if item.is_file():
             item.unlink()
         else:
@@ -129,7 +129,7 @@ def export_results(filepath: Path, data, filetype: str):
     if filetype == "npy":
         np.save(f"{filepath}.npy", data)
     elif filetype == "pkl" or filetype == "pickle":
-        with open(f"{filepath}.pickle", 'wb') as handle:
+        with open(f"{filepath}.pickle", "wb") as handle:
             pickle.dump(data, handle)
     elif filetype == "json":
         with open(f"{filepath}.json", "w") as json_file:
@@ -139,6 +139,18 @@ def export_results(filepath: Path, data, filetype: str):
 
 
 def read_pickle(path):
-    with open(path, 'rb') as file:
+    with open(path, "rb") as file:
         data = pickle.load(file)
     return data
+
+
+def read_txt(path):
+    with open(path, "r") as file:
+        lines = file.readlines()
+
+    integers = []
+
+    for line in lines:
+        integers.extend(map(int, line.strip().split(",")))
+
+    return integers

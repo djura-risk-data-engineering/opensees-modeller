@@ -28,7 +28,6 @@ class RCMRF:
     def __init__(
         self,
         analysis_options: Union[int, List[int]] = None,
-        workers: int = None,
         export_dir: Union[Path, str] = None,
         gm_folder: Path = None,
         gm_filenames: List[Union[Path, str]] = None,
@@ -38,7 +37,6 @@ class RCMRF:
         eq_name_x: str = None,
         eq_name_y: str = None,
         dcap: float = 10.,
-        multiprocess: bool = True,
     ) -> None:
         """Initialize RCMRF modeller
 
@@ -100,7 +98,6 @@ class RCMRF:
         """
 
         self.analysis_options = analysis_options
-        self.workers = workers
         self.export_dir = export_dir
         self.gm_folder = gm_folder
         self.gm_filenames = gm_filenames
@@ -110,7 +107,6 @@ class RCMRF:
         self.eq_name_x = eq_name_x
         self.eq_name_y = eq_name_y
         self.dcap = dcap
-        self.multiprocess = multiprocess
 
         if isinstance(self.export_dir, str):
             self.export_dir = Path(self.export_dir)
@@ -118,7 +114,7 @@ class RCMRF:
         if self.export_dir is not None:
             create_path(self.export_dir)
 
-    def wipe():
+    def wipe(self):
         op.wipe()
 
     def _build_model(self):
@@ -130,7 +126,8 @@ class RCMRF:
         self,
         eigenvalue_analysis: Union[str, Path] = None,
     ) -> None:
-        self._build_model()
+        if not self.MSA_KEYS & set(self.analysis_options):
+            self._build_model()
 
         self.analyze(eigenvalue_analysis)
 
@@ -214,11 +211,8 @@ class RCMRF:
             analysis_time_step=self.analysis_time_step,
         )
 
-        if self.multiprocess:
-            msa.start(records, workers=self.workers)
-        else:
-            for batch in list(records.items()):
-                msa.analyze(batch)
+        for batch in list(records.items()):
+            msa.analyze(batch)
 
         return msa.outputs
 

@@ -1,7 +1,6 @@
 from typing import List
 from pathlib import Path
 import pickle
-import multiprocessing as mp
 import openseespy.opensees as op
 import numpy as np
 
@@ -73,30 +72,6 @@ class MSA:
 
         build()
         gravity()
-
-    def start(self, records, workers: int = 0) -> None:
-        """Start MSA using multiprocessing
-
-        Parameters
-        ----------
-        records : RecordsMSAModel
-            Dictionary containing records per batch (intensity level)
-        workers : int, optional
-            Number of workers, by default 0
-        """
-        self.use_multiprocess = True
-
-        # Get number of CPUs available
-        if workers == 0:
-            workers = mp.cpu_count()
-        if workers > 0:
-            workers = workers + 1
-
-        with mp.Pool(workers - 1, maxtasksperchild=1) as pool:
-            outputs = pool.imap(self.analyze, list(records.items()))
-
-            for _ in outputs:
-                print("[SUCCESS]")
 
     def analyze(self, batch) -> None:
         """Performs MSA
@@ -173,7 +148,7 @@ class MSA:
 
             # Commence analysis
             th = SolutionAlgorithm(
-                self.output_path, analysis_time_step, dur, self.dcap,
+                self.output_path / name, analysis_time_step, dur, self.dcap,
                 self.bnode, self.tnode,
                 extra_dur=self.EXTRA_DUR,
             )
