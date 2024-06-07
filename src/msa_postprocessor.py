@@ -28,7 +28,7 @@ class MSAPostprocessor:
 
         if rps is not None:
             rp = rps[idx]
-        if imls is not None:
+        if imls is not None and not isinstance(imls, dict):
             im = imls[idx]
         if coefs is None and hazard is not None:
             coefs = hazard['coef']
@@ -45,6 +45,10 @@ class MSAPostprocessor:
                 rp = int(1 / mafe)
             except Exception:
                 rp = int(level)
+
+                if isinstance(imls, dict):
+                    im = imls[str(rp)]
+
             finally:
                 # compute from hazard
 

@@ -1,7 +1,10 @@
 import json
 import pickle
 import numpy as np
+from scipy import stats
+from scipy.interpolate import interp1d
 from pathlib import Path
+import warnings
 
 
 def append_record(x, y):
@@ -142,3 +145,86 @@ def read_pickle(path):
     with open(path, 'rb') as file:
         data = pickle.load(file)
     return data
+
+
+def mlefit(median: float, dispersion: float, total_count: int, count: int,
+           data) -> float:
+    """Maximum likelihood method
+    Performs a lognormal cumulative distribution function fit to the data
+    points based on maximum likelihood method
+
+    Parameters
+    ----------
+    median : float
+        Median of the function, parameter of a statistical model to be found
+    dispersion : float
+        Standard deviation of the function, parameter of a statistical model
+        to be found
+    total_count : int
+        Number of data points
+    count : int
+        Number of failures
+    data: Union[List, np.ndarray]
+        The function, data points
+
+    Returns
+    -------
+    float
+        Negative Log likelihood to be minimized
+    """
+    warnings.filterwarnings("ignore", category=RuntimeWarning)
+
+    try:
+        p = stats.norm.cdf(np.log(data), loc=np.log(median), scale=dispersion)
+        likelihood = stats.binom.pmf(count, total_count, p)
+        likelihood[likelihood == 0] = 1e-290
+        loglik = -sum(np.log10(likelihood))
+
+        warnings.resetwarnings()
+
+        return loglik
+    except OverflowError:
+        warnings.resetwarnings()
+
+        return 1e+8
+
+
+def spline(x, y, size: int = 1000) -> tuple[np.ndarray, np.ndarray]:
+    """Performs a spline
+
+    Parameters
+    ----------
+    x : list
+    y : list
+    size : int, optional
+        Number of interpolation points, by default 1000
+
+    Returns
+    -------
+    tuple[np.ndarray, np.ndarray]
+        Fitted x and y
+    """
+
+    x_range = range(len(x))
+    points = np.linspace(0, x_range[-1], size * x_range[-1])
+    xi = interp1d(x_range, x)(points)
+    yi = interp1d(x_range, y)(points)
+
+    return xi, yi
+
+
+def is_list_of_lists(lst):
+    if isinstance(lst, np.ndarray):
+        if lst.ndim > 1:
+            return True
+        return False
+
+    for item in lst:
+        if isinstance(item, list) or isinstance(item, np.ndarray):
+            return True
+    return False
+
+
+def cdf_lognormal_norm(xs, median: float, beta: float) -> np.ndarray:
+    prob = stats.norm.cdf((np.log(xs / median)) / beta)
+    return prob
