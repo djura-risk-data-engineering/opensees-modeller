@@ -15,7 +15,7 @@ def apply_time_series(
     fx: float,
     fy: float,
     omegas: List[float],
-    damping: List[float],
+    damping: float,
     tstagx: int = 51,
     tstagy: int = 52,
     ptagx: int = 10,
@@ -50,6 +50,8 @@ def apply_time_series(
     """
     # Delete the old analysis and all of its component objects
     op.wipeAnalysis()
+
+    omegas = np.array(omegas)
 
     w1 = omegas[0]
     w2 = omegas[1]
@@ -121,7 +123,7 @@ class SolutionAlgorithm:
         """
         self.output_path = output_path
         if self.output_path is not None:
-            self.output_path = self.output_path.with_suffix("")
+            self.output_path = self.output_path
         self.dt = dt
         self.dur = dur
         self.extra_dur = extra_dur
@@ -416,7 +418,7 @@ class SolutionAlgorithm:
 
         remove_directory_contents(cache_path)
 
-        accelerations = np.array(accelerations)
+        accelerations = np.asarray(accelerations)
 
         if self.collapse_index == -1:
             print(f"[FAILURE] Analysis failed to converge at {control_time}"
