@@ -51,11 +51,29 @@ class MSAPostprocessor:
 
             finally:
                 # compute from hazard
-
-                mafe = analytical_mafe(im, coefs[0], coefs[1], coefs2)
-                rp = int(1 / mafe)
+                if rp is None:
+                    mafe = analytical_mafe(im, coefs[0], coefs[1], coefs2)
+                    rp = int(1 / mafe)
 
         return rp, im
+
+    @staticmethod
+    def get_edp(out, direction, storey, edptype, rps, factor=1.0):
+        edp = []
+        # For each return period
+        for rp in rps:
+            rp = str(rp)
+            if edptype == "drift":
+                edp.append(out[rp][str(direction+1)][edptype][str(storey)])
+            else:
+                # acc
+                critical = np.array(max(
+                    out[rp][str(1)][edptype][str(storey)],
+                    out[rp][str(2)][edptype][str(storey)])) \
+                    * factor
+                edp.append(list(critical))
+
+        return edp
 
     def postprocess(
             self, nst: int, imls: List[float] = None,
