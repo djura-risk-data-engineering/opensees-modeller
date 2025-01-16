@@ -61,14 +61,14 @@ class MSA_MP:
     def run_msa(self, batch):
 
         msa = MSA(
-            self.bnode,
-            self.tnode,
             self.gm_folder,
             self.export_dir,
             self.damping,
             self.omegas,
             self.dcap,
             analysis_time_step=self.analysis_time_step,
+            bnode=self.bnode,
+            tnode=self.tnode,
         )
         msa.use_multiprocess = True
 

@@ -7,7 +7,7 @@ from src.rcmrf import RCMRF
 if __name__ == "__main__":
     path = Path.cwd()
     outputs_dir = path / "out2"
-    gmdir = path / "data/case2/records1"
+    gmdir = path / "records1"
 
     gmfilenames = ["GMR_H1_names.txt", "GMR_H2_names.txt", "GMR_dts.txt"]
     # gmfilenames = ["GMR_names.txt", "GMR_names.txt", "GMR_dts.txt"]
@@ -28,9 +28,9 @@ if __name__ == "__main__":
         export_dir=outputs_dir,
         gm_folder=gmdir,
         gm_filenames=gmfilenames,
-        multiprocess=False,
+        multiprocess=True,
         damping=eigenvalues["Damping"][0],
         omegas=eigenvalues["CircFreq"],
     )
 
-    msa.start(records, workers=1)
+    msa.start(records, workers=2)
