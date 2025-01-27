@@ -6,9 +6,9 @@ import openseespy.opensees as op
 from .modal import Modal
 from .msa import MSA
 
-from .utilities import create_path, export_results
-from .model import build
-from .analysis1 import gravity
+from .utilities import (create_path, export_results,
+                        extract_tnodes_bnodes_nspa_file)
+from .mdof.model import build_model
 from .gm_records import get_records
 
 
@@ -18,9 +18,6 @@ class RCMRF:
     MODAL_KEYS = set(['ma', 'modal', 'eigenvalue'])
     MSA_KEYS = set(['msa', 'multi-stripe-analysis'])
     IDA_KEYS = set(['ida', 'incremental-dynamic-analysis'])
-
-    bnode = []
-    tnode = []
 
     rcmrf = None
     g = 9.81
@@ -108,6 +105,10 @@ class RCMRF:
         self.eq_name_y = eq_name_y
         self.dcap = dcap
 
+        tnode, bnode = extract_tnodes_bnodes_nspa_file()
+        self.bnode = bnode
+        self.tnode = tnode
+
         if isinstance(self.export_dir, str):
             self.export_dir = Path(self.export_dir)
 
@@ -119,8 +120,7 @@ class RCMRF:
 
     def _build_model(self):
         # Build the model
-        build()
-        gravity()
+        build_model()
 
     def modeller(
         self,
@@ -201,14 +201,14 @@ class RCMRF:
             self.gm_folder, self.gm_filenames, self.export_dir)
 
         msa = MSA(
-            self.bnode,
-            self.tnode,
             self.gm_folder,
             self.export_dir,
             damping,
             omegas,
             self.dcap,
             analysis_time_step=self.analysis_time_step,
+            bnode=self.bnode,
+            tnode=self.tnode,
         )
 
         for batch in list(records.items()):

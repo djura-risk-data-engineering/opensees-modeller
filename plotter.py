@@ -2,8 +2,8 @@ from src.msa_plotter import MSAPlotter
 from pathlib import Path
 import json
 
-path = Path.cwd() / "figs"
-filename = Path.cwd() / "out/msaTomas.json"
+path = Path(__file__).parent / "figs"
+filename = Path(__file__).parent / "out/msaTomas.json"
 demands = json.load(open(filename))
 
 direction = 1   # Can be 1 or 2

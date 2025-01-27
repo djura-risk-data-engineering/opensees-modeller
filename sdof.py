@@ -3,7 +3,7 @@ from src.sdof.rcmrf import RCMRF
 
 
 # Directories
-main_dir = Path.cwd()
+main_dir = Path(__file__).parent
 outputsDir = main_dir / "out/ida"
 
 # Ensure the directories exist

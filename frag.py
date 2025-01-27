@@ -6,8 +6,8 @@ from src.demolition import Demolition
 from src.fragility import plot_fragility, Fragility, retrieve_demand_for_calc
 from src.demand import Demand, convert_demands, convert_list_to_ndarray
 
-path = Path.cwd() / "figs"
-filename = Path.cwd() / "out/msaTomas.json"
+path = Path(__file__).parent / "figs"
+filename = Path(__file__).parent / "out/msaTomas.json"
 demands = json.load(open(filename))
 demands = convert_demands(demands)
 demands = convert_list_to_ndarray(demands)

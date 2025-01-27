@@ -5,9 +5,8 @@ import openseespy.opensees as op
 import numpy as np
 
 from .solution_algorithm import SolutionAlgorithm, apply_time_series
-from .utilities import append_record
-from .model import build
-from .analysis1 import gravity
+from .utilities import append_record, extract_tnodes_bnodes_nspa_file
+from .mdof.model import build_model
 
 
 class MSA:
@@ -23,8 +22,6 @@ class MSA:
 
     def __init__(
         self,
-        bnode: List,
-        tnode: List,
         gm_folder: Path,
         output_path: Path,
         damping: float,
@@ -32,6 +29,8 @@ class MSA:
         dcap: float = 10.,
         analysis_time_step: float = None,
         export_at_each_step: bool = True,
+        bnode: List = None,
+        tnode: List = None,
     ) -> None:
         """Multiple Stripe Analysis (MSA)
 
@@ -56,8 +55,6 @@ class MSA:
         export_at_each_step : bool, optional
             Export time history results at each step of IDA, by default True
         """
-        self.bnode = bnode
-        self.tnode = tnode
         self.gm_folder = gm_folder
         self.output_path = output_path
         self.damping = damping
@@ -66,12 +63,16 @@ class MSA:
         self.analysis_time_step = analysis_time_step
         self.export_at_each_step = export_at_each_step
 
+        if tnode is None and bnode is None:
+            tnode, bnode = extract_tnodes_bnodes_nspa_file()
+        self.bnode = bnode
+        self.tnode = tnode
+
     def _call_model(self, generate_model: bool = True):
         if not generate_model:
             return
 
-        build()
-        gravity()
+        build_model()
 
     def analyze(self, batch) -> None:
         """Performs MSA

@@ -2,25 +2,15 @@ from pathlib import Path
 from src.gm_records import get_records
 from src.msa_mp import MSA_MP
 from src.rcmrf import RCMRF
-from src.utilities import read_txt
 
 
 if __name__ == "__main__":
     path = Path.cwd()
     outputs_dir = path / "out2"
-    gmdir = path / "data/case2/records1"
+    gmdir = path / "records1"
 
     gmfilenames = ["GMR_H1_names.txt", "GMR_H2_names.txt", "GMR_dts.txt"]
     # gmfilenames = ["GMR_names.txt", "GMR_names.txt", "GMR_dts.txt"]
-
-    path_bnodes = path / "src/bnode.txt"
-    path_tnodes = path / "src/tnode.txt"
-
-    bnode = read_txt(path_bnodes)
-    tnode = read_txt(path_tnodes)
-
-    bnode = [bnode, bnode]
-    tnode = [tnode, tnode]
 
     rcmrf = RCMRF(
         analysis_options=["msa"],
@@ -41,8 +31,6 @@ if __name__ == "__main__":
         multiprocess=True,
         damping=eigenvalues["Damping"][0],
         omegas=eigenvalues["CircFreq"],
-        bnode=bnode,
-        tnode=tnode,
     )
 
     msa.start(records, workers=2)
