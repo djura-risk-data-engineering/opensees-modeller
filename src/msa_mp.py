@@ -13,9 +13,6 @@ class MSA_MP:
         gm_filenames: List[Union[Path, str]] = None,
         im_type: int = 2,
         analysis_time_step: float = None,
-        dt_record: float = None,
-        eq_name_x: str = None,
-        eq_name_y: str = None,
         dcap: float = 10.,
         multiprocess: bool = True,
         damping=None,
@@ -29,9 +26,6 @@ class MSA_MP:
         self.gm_filenames = gm_filenames
         self.im_type = im_type
         self.analysis_time_step = analysis_time_step
-        self.dt_record = dt_record
-        self.eq_name_x = eq_name_x
-        self.eq_name_y = eq_name_y
         self.dcap = dcap
         self.multiprocess = multiprocess
         self.damping = damping

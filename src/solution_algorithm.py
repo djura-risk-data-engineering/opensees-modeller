@@ -66,10 +66,13 @@ def apply_time_series(
     # Time series excitation
     op.timeSeries('Path', tstagx, '-dt', dt,
                   '-filePath', str(pathx), '-factor', fx)
-    op.timeSeries('Path', tstagy, '-dt', dt,
-                  '-filePath', str(pathy), '-factor', fy)
+
     op.pattern('UniformExcitation', ptagx, 1, '-accel', tstagx)
-    op.pattern('UniformExcitation', ptagy, 2, '-accel', tstagy)
+
+    if pathy is not None:
+        op.timeSeries('Path', tstagy, '-dt', dt,
+                      '-filePath', str(pathy), '-factor', fy)
+        op.pattern('UniformExcitation', ptagy, 2, '-accel', tstagy)
 
     # Constraints
     op.constraints('Penalty', 1.0e15, 1.0e15)
@@ -97,6 +100,7 @@ class SolutionAlgorithm:
         tnode: Union[np.array, List[int]],
         pflag: bool = True,
         extra_dur: float = 10.,
+        directions: int = 2,
     ) -> None:
         """Algorithms to execute nonlinear time history analysis (NLTHA)
 
@@ -130,6 +134,7 @@ class SolutionAlgorithm:
         self.dc = dc
         self.bnode = np.array(bnode)
         self.tnode = np.array(tnode)
+        self.directions = directions
 
         # TODO, remove pflag and do logging instead
         self.pflag = pflag
@@ -295,8 +300,7 @@ class SolutionAlgorithm:
         mdrift_init = 0.0
 
         # Recorders for both horizontal directions
-        directions = 2
-        for j in range(directions):
+        for j in range(self.directions):
             filename = f'accelerations_{j + 1}.txt'
 
             # Recorders for nodal accelerations, because in current version of
@@ -311,14 +315,14 @@ class SolutionAlgorithm:
         nst = self.tnode.shape[1]
 
         # initialize maximum drifts and accelerations
-        mdrift = np.zeros((directions, nst))
+        mdrift = np.zeros((self.directions, nst))
         # maccel = np.zeros((directions, nst + 1))
 
         # Recorders for displacements, accelerations and drifts, initialization
-        displacements = np.zeros((directions, nst + 1, 1))
-        accelerations = np.zeros((directions, nst + 1, 1))
-        drifts = np.zeros((directions, nst, 1))
-        residuals = np.zeros((directions, nst, 1))
+        displacements = np.zeros((self.directions, nst + 1, 1))
+        accelerations = np.zeros((self.directions, nst + 1, 1))
+        drifts = np.zeros((self.directions, nst, 1))
+        residuals = np.zeros((self.directions, nst, 1))
 
         h = self._verify_against_zerolength()
 
@@ -335,10 +339,10 @@ class SolutionAlgorithm:
             self._algorithm(ok, control_time)
 
             # Recorders
-            temp_accel = np.zeros((directions, nst + 1, 1))
-            temp_disp = np.zeros((directions, nst + 1, 1))
-            temp_drift = np.zeros((directions, nst, 1))
-            temp_res = np.zeros((directions, nst, 1))
+            temp_accel = np.zeros((self.directions, nst + 1, 1))
+            temp_disp = np.zeros((self.directions, nst + 1, 1))
+            temp_drift = np.zeros((self.directions, nst, 1))
+            temp_res = np.zeros((self.directions, nst, 1))
 
             # Recording EDPs at each storey level to return
             # For each direction
@@ -392,7 +396,7 @@ class SolutionAlgorithm:
                 if cdrift_x >= mdrift[0, i - 1]:
                     mdrift[0, i - 1] = cdrift_x
 
-                if cdrift_y >= mdrift[1, i - 1]:
+                if self.directions == 2 and cdrift_y >= mdrift[1, i - 1]:
                     mdrift[1, i - 1] = cdrift_y
 
                 if max(cdrift_x, cdrift_y) >= mdrift_init:
@@ -410,7 +414,7 @@ class SolutionAlgorithm:
 
         # Record the absolute accelerations, when use_recorder is True
         accelerations = []
-        for j in range(directions):
+        for j in range(self.directions):
             filename = f'accelerations_{j + 1}.txt'
 
             accelerations.append(np.transpose(

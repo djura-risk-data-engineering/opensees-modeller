@@ -2,9 +2,11 @@ from typing import Union, List
 from pathlib import Path
 import json
 import openseespy.opensees as op
+from numpy import pi, asarray
 
 from .modal import Modal
 from .msa import MSA
+from .ida import IDA
 
 from .utilities import (create_path, export_results,
                         extract_tnodes_bnodes_nspa_file)
@@ -30,30 +32,16 @@ class RCMRF:
         gm_filenames: List[Union[Path, str]] = None,
         im_type: int = 2,
         analysis_time_step: float = None,
-        dt_record: float = None,
-        eq_name_x: str = None,
-        eq_name_y: str = None,
         dcap: float = 10.,
+        sa_avg_bounds=[0, 2],
+        max_runs=10
     ) -> None:
         """Initialize RCMRF modeller
 
         Parameters
         ----------
-        concrete_modulus : float
-            Concrete elastic modulus in MPa
-        loads : ActionModel
-            Gravity loads, as well as seismic loads, based on which
-            seismic masses are computed
-        hinge_1 : HingeModel, optional
-            Lumped hinge properties in 1 direction, by default None
-        hinge_2 : HingeModel, optional
-            Lumped hinge properties in 2 direction, by default None
-        hinge_internal : InternalHingeModel, optional
-            Lumped hinge properties of internal elements, by default None
         analysis_options : Union[int, List[int]], optional
             Analysis types to consider, by default None
-        system : str, optional
-            System configuration, 'perimeter' or 'space', by default 'space'
         export_dir : Union[Path, str], optional
             Directory where to export outputs, by default None
             Required for MSA and IDA
@@ -82,12 +70,6 @@ class RCMRF:
         analysis_time_step : float, optional
             Nonlinear analysis time step, by default None
             If None, will default to ground motion record time step
-        dt_record : float, optional
-            Record time step, required for NLTHA, by default None
-        eq_name_x : str, optional
-            Record filename in X direction, required for NLTHA, by default None
-        eq_name_y : str, optional
-            Record filename in Y direction, required for NLTHA, by default None
         dcap : float, optional
             Drift capacity, beyond which full collapse of building is assumed
             in [%], by default 10.
@@ -100,10 +82,9 @@ class RCMRF:
         self.gm_filenames = gm_filenames
         self.im_type = im_type
         self.analysis_time_step = analysis_time_step
-        self.dt_record = dt_record
-        self.eq_name_x = eq_name_x
-        self.eq_name_y = eq_name_y
         self.dcap = dcap
+        self.sa_avg_bounds = sa_avg_bounds
+        self.max_runs = max_runs
 
         tnode, bnode = extract_tnodes_bnodes_nspa_file()
         self.bnode = bnode
@@ -114,6 +95,14 @@ class RCMRF:
 
         if self.export_dir is not None:
             create_path(self.export_dir)
+
+        if analysis_options is not None:
+            if not isinstance(analysis_options, list):
+                self.analysis_options = [analysis_options.lower()]
+            else:
+                self.analysis_options = [ao.lower() for ao in analysis_options]
+        else:
+            self.analysis_options = analysis_options
 
     def wipe(self):
         op.wipe()
@@ -126,8 +115,12 @@ class RCMRF:
         self,
         eigenvalue_analysis: Union[str, Path] = None,
     ) -> None:
-        if not self.MSA_KEYS & set(self.analysis_options):
+        if self.analysis_options is None or \
+            not self.IDA_KEYS.union(self.MSA_KEYS) \
+                & set(self.analysis_options):
+            # Tests model builder (no analysis)
             self._build_model()
+            print("Model Built")
 
         self.analyze(eigenvalue_analysis)
 
@@ -164,6 +157,15 @@ class RCMRF:
             self.outputs['eigenvalue']['Damping'] = list(m.damping_modes)
             self.outputs['eigenvalue']['CircFreq'] = list(m.omega)
 
+        if self.IDA_KEYS & set(self.analysis_options):
+            outs = self.perform_ida(
+                eigenvalue_analysis,
+            )
+            self.outputs['ida'] = {
+                'response': outs[0],
+                'IMs': outs[1]
+            }
+
         if self.MSA_KEYS & set(self.analysis_options):
             self.outputs['msa'] = self.perform_msa(
                 eigenvalue_analysis,
@@ -173,6 +175,36 @@ class RCMRF:
         if not self.IDA_KEYS.union(self.MSA_KEYS) \
                 & set(self.analysis_options) and self.export_dir is not None:
             export_results(self.export_dir / "outputs", self.outputs, "json")
+
+    def perform_ida(
+        self,
+        eigenvalue_analysis=None,
+    ):
+        modal_properties = self.get_modal_properties(eigenvalue_analysis)
+
+        damping = modal_properties['Damping'][0]
+        omegas = modal_properties['CircFreq'][:2]
+        period_cond = 2 * pi / asarray(omegas)
+
+        ida = IDA(
+            self.rcmrf,
+            self.gm_folder,
+            self.export_dir,
+            self.gm_filenames,
+            damping,
+            omegas,
+            period_cond,
+            self.im_type,
+            analysis_time_step=self.analysis_time_step,
+            sa_avg_bounds=self.sa_avg_bounds,
+            max_runs=self.max_runs,
+            bnode=self.bnode,
+            tnode=self.tnode,
+        )
+
+        ida.analyze()
+
+        return ida.outputs, ida.im_output
 
     def perform_msa(
         self,
@@ -232,12 +264,9 @@ class RCMRF:
             Eigenvalue analysis outputs in a dictionary format
         """
         # Reading directly from input
-        if eigenvalue_analysis:
+        if eigenvalue_analysis is not None:
             filename = None
             ma = eigenvalue_analysis
-        elif eigenvalue_analysis:
-            filename = eigenvalue_analysis
-            ma = None
         else:
             filename = None
             ma = None

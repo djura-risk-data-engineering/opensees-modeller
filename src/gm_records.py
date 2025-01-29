@@ -100,7 +100,11 @@ def get_records(gm_folder: Path, filenames: List[Path],
         # Get the ground motion information
         names_x, names_y, dts_list = get_ground_motion(
             gm_folder / sub_path, filenames)
-        records[sub_path] = {"X": list(names_x), "Y": list(
-            names_y), "dt": list(dts_list)}
+
+        if names_y is not None:
+            names_y = list(names_y)
+
+        records[sub_path] = {"X": list(names_x), "Y": names_y,
+                             "dt": list(dts_list)}
 
     return records

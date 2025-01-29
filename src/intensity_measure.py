@@ -54,10 +54,7 @@ class IntensityMeasure:
         fas = np.fft.fft(acc, n_points)
         d_freq = 1 / (dt * (n_points - 1))
         freq = d_freq * np.array(range(n_points))
-        if n_points % 2 != 0:
-            sym_idx = int(np.ceil(n_points / 2))
-        else:
-            sym_idx = int(1 + n_points / 2)
+        sym_idx = int(1 + n_points / 2)
 
         nat_freq = 1 / period
 
@@ -72,12 +69,8 @@ class IntensityMeasure:
                 * damping * i * nat_freq
             ) for i in freq[1: sym_idx]])
 
-        if n_points % 2 != 0:
-            h[np.int_(np.arange(len(h) - sym_idx + 1, len(h)))
-              ] = np.flipud(np.conj(h[np.int_(np.arange(1, sym_idx))]))
-        else:
-            h[np.int_(np.arange(len(h) - sym_idx + 2, len(h)))
-              ] = np.flipud(np.conj(h[np.int_(np.arange(1, sym_idx - 1))]))
+        h[np.int_(np.arange(len(h) - sym_idx + 2, len(h)))] = \
+            np.flipud(np.conj(h[np.int_(np.arange(1, sym_idx - 1))]))
 
         return h, fas
 

@@ -138,10 +138,12 @@ class MSA:
 
             if names_y is None:
                 print(f"[MSA] Record: {rec} - {name}: {names_x[rec]};")
+                directions = 1
             else:
                 print(
                     f"[MSA] Record: {rec} - {name}: {names_x[rec]} and "
                     f"{names_y[rec]} pair;")
+                directions = 2
 
             analysis_time_step = min(analysis_time_step, dt)
             if dt % analysis_time_step != 0:
@@ -152,6 +154,7 @@ class MSA:
                 self.output_path / name, analysis_time_step, dur, self.dcap,
                 self.bnode, self.tnode,
                 extra_dur=self.EXTRA_DUR,
+                directions=directions
             )
             self.outputs[name][rec] = th.solve()
 
