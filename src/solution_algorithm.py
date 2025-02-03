@@ -274,7 +274,8 @@ class SolutionAlgorithm:
                     warnings.warn('[WARNING] Zerolength found in drift check.')
         return h
 
-    def solve(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def solve(self, rec: int = None
+              ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Looks for a solution, performs nonlinear time history analysis
 
         Returns
@@ -288,11 +289,16 @@ class SolutionAlgorithm:
         """
         # Create self.output_path and a temporary cache folder
         if self.output_path is not None:
-            create_path(self.output_path / "cache")
-            cache_path = self.output_path / 'cache'
+            if rec is None:
+                cache_path = self.output_path / 'cache'
+            else:
+                cache_path = self.output_path / f'rec{rec}_cache'
         else:
-            create_path(Path("cache"))
-            cache_path = Path('cache')
+            if rec is None:
+                cache_path = Path('cache')
+            else:
+                cache_path = Path(f'rec{rec}_cache')
+        create_path(cache_path)
 
         # Set up analysis parameters
         control_time = 0.0

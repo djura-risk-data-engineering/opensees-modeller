@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import List, Union
 import openseespy.opensees as op
 import numpy as np
+import multiprocessing as mp
 
 from .intensity_measure import IntensityMeasure
 from .solution_algorithm import SolutionAlgorithm, apply_time_series
@@ -142,16 +143,16 @@ class IDA:
             output_path, analysis_time_step, dur, self.dcap,
             self.bnode, self.tnode, directions=directions
         )
-
-        self.outputs[rec][j] = th.solve()
-
+        accelerations, displacements, drifts, residuals = th.solve(rec)
+        self.outputs[rec][j] = (accelerations, displacements, drifts,
+                                residuals, im[j - 1])
         # Export results at each run
         if self.export_at_each_step:
             with open(
                 output_path / f"Record{rec + 1}_Run{j}.pickle", "wb"
             ) as handle:
                 pickle.dump(self.outputs[rec][j], handle)
-            np.savetxt(im_filename, self.im_output, delimiter=',')
+            # np.savetxt(im_filename, self.im_output, delimiter=',')
 
         return th.collapse_index
 
@@ -415,3 +416,136 @@ class IDA:
                 self.output_path, im_filename)
 
         print('[IDA] Finished IDA HTF')
+
+    def _ida_single(self, rec_data):
+        """Function to process a single record in parallel."""
+        rec, gm_1, gm_2, dts, im_filename = rec_data
+
+        # Get ground motion data
+        eq_name_x = self.gm_folder / gm_1
+        eq_name_y = None
+        dt_record = dts
+        accg_x = np.loadtxt(eq_name_x)
+        dur = dt_record * (len(accg_x) - 1) + self.EXTRA_DUR
+
+        if gm_2 is not None:
+            eq_name_y = self.gm_folder / gm_2
+            accg_y = np.loadtxt(eq_name_y)
+
+        # Establish the IM
+        if self.im_type == 1:
+            print(f"[IDA] IM is the PGA for record {rec}")
+            im_x = self.IM.get_pga(accg_x)
+            if gm_2 is not None:
+                im_y = self.IM.get_pga(accg_y)
+
+        elif self.im_type == 2:
+            print(f"[IDA] IM is Sa at a specified period for record {rec}")
+            im_x = self.IM.get_sat(
+                self.period_cond[0], accg_x, dt_record, self.damping
+                )
+            if gm_2 is not None:
+                im_y = self.IM.get_sat(
+                    self.period_cond[1], accg_y, dt_record, self.damping
+                )
+
+        elif self.im_type == 3:
+            print(f"[IDA] IM is Sa_avg for record {rec}")
+            periods_x = [
+                round(factor * self.period_cond[0], 2)
+                for factor in np.linspace(
+                    self.sa_avg_bounds[0], self.sa_avg_bounds[1], 10
+                )
+            ]
+            periods_y = [
+                round(factor * self.period_cond[1], 2)
+                for factor in np.linspace(
+                    self.sa_avg_bounds[0], self.sa_avg_bounds[1], 10
+                )
+            ]
+
+            im_x_0 = self.IM.get_sat(
+                np.array(periods_x), accg_x, dt_record, self.damping
+            )
+            im_x = im_x_0.prod() ** (1 / len(im_x_0))
+
+            if gm_2 is not None:
+                im_y_0 = self.IM.get_sat(
+                    np.array(periods_y), accg_y, dt_record, self.damping
+                )
+                im_y = im_y_0.prod() ** (1 / len(im_y_0))
+
+        else:
+            raise ValueError(
+                "[EXCEPTION] IM type provided incorrectly (must be 1, 2, or 3)"
+            )
+
+        # Compute the geometric mean
+        im_geomean = np.power(im_x * im_y, 0.5) if gm_2 is not None else im_x
+
+        # Perform hunt-trace-fill analysis
+        self._hunt_trace_fill(
+            im_geomean,
+            dt_record,
+            dur,
+            eq_name_x,
+            eq_name_y,
+            rec,
+            self.output_path,
+            im_filename,
+        )
+
+    def analyze_mp(self, workers) -> None:
+        """Performs IDA using multiprocessing."""
+
+        im_filename = self.output_path / "IM.csv"
+        if im_filename.exists():
+            im_filename = self.output_path / "IM_temp.csv"
+
+        # Get the ground motion set information
+        gm_1, gm_2, dts = get_ground_motion(self.gm_folder, self.gm_filenames)
+
+        try:
+            nrecs = len(dts)
+        except Exception:
+            dts = np.array([dts])
+            nrecs = len(dts)
+
+        if gm_2 is None:
+            gm_2 = nrecs * [None]
+
+        # Initialize intensity measures
+        self.im_output = np.zeros((nrecs, self.max_runs))
+
+        # Prepare data for multiprocessing
+        records_data = [(rec, gm_1[rec], gm_2[rec], (dts[rec]), im_filename)
+                        for rec in range(nrecs)]
+
+        # Get number of CPUs available
+        if workers == 0:
+            workers = mp.cpu_count()
+        if workers > 0:
+            workers = workers + 1
+        with mp.Manager() as manager:
+            self.outputs = manager.dict()
+            # Ensure self.outputs[rec] exists as a shared dictionary
+            for rec in range(nrecs):
+                if rec not in self.outputs:
+                    self.outputs[rec] = manager.dict()
+                    # Ensure self.outputs[rec][i] exists as a shared dictionary
+                    for j in range(1, self.max_runs + 1):
+                        self.outputs[rec][j] = None
+            # Use multiprocessing to process records in parallel
+            with mp.Pool(workers - 1, maxtasksperchild=1) as pool:
+                pool.map(self._ida_single, records_data)
+            # Convert to a normal dictionary before the manager is closed
+            outputs = {rec: dict(self.outputs[rec]) for rec in self.outputs}
+        self.outputs = outputs
+
+        for rec in self.outputs:
+            for i in self.outputs[rec]:
+                self.im_output[rec, i-1] = self.outputs[rec][i][4]
+
+        np.savetxt(im_filename, self.im_output, delimiter=',')
+
+        print(f'[IDA] Finished IDA HTF for {nrecs} records')
