@@ -311,10 +311,18 @@ class SolutionAlgorithm:
 
             # Recorders for nodal accelerations, because in current version of
             # openseespy ground accelerations are not being recorded otherwise
+            # op.recorder('Node', '-file', str(cache_path / filename),
+            #             '-timeSeries', int(f"5{j + 1}"),
+            #             '-nodeRange', int(self.bnode[0, 0]
+            #                               ), int(self.tnode[0, -1]),
+            #             '-dof', j + 1, 'accel')
+
+            _nodes = np.concatenate(
+                ([self.bnode[0][0]], self.tnode[0])).tolist()
+
             op.recorder('Node', '-file', str(cache_path / filename),
                         '-timeSeries', int(f"5{j + 1}"),
-                        '-nodeRange', int(self.bnode[0, 0]
-                                          ), int(self.tnode[0, -1]),
+                        '-node', *_nodes,
                         '-dof', j + 1, 'accel')
 
         # Number of storeys
