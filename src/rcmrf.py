@@ -34,7 +34,8 @@ class RCMRF:
         analysis_time_step: float = None,
         dcap: float = 10.,
         sa_avg_bounds=[0, 2],
-        max_runs=10
+        max_runs=10,
+        workers=None
     ) -> None:
         """Initialize RCMRF modeller
 
@@ -74,6 +75,9 @@ class RCMRF:
             Drift capacity, beyond which full collapse of building is assumed
             in [%], by default 10.
             Required for NLTHA
+        workers : int, optional
+            Number of workers to use in if it is desired to run IDA
+            with multiple-processors, by default None.
         """
 
         self.analysis_options = analysis_options
@@ -85,6 +89,7 @@ class RCMRF:
         self.dcap = dcap
         self.sa_avg_bounds = sa_avg_bounds
         self.max_runs = max_runs
+        self.workers = workers
 
         tnode, bnode = extract_tnodes_bnodes_nspa_file()
         self.bnode = bnode
@@ -201,8 +206,10 @@ class RCMRF:
             bnode=self.bnode,
             tnode=self.tnode,
         )
-
-        ida.analyze()
+        if self.workers is None:
+            ida.analyze()
+        else:
+            ida.analyze_mp(self.workers)
 
         return ida.outputs, ida.im_output
 
