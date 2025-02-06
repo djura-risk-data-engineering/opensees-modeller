@@ -210,7 +210,7 @@ class IDAPostprocessor:
 
         return data
 
-    def postprocess(self) -> Tuple[dict, dict]:
+    def postprocess(self, n_dir=2) -> Tuple[dict, dict]:
         """Postprocess IDA outputs
 
         Returns
@@ -254,7 +254,7 @@ class IDAPostprocessor:
         nruns = im_ida.shape[1]
 
         # Loop for each direction for a 3D model
-        n_dir = 2
+        n_dir = n_dir
 
         # Initialize some variables
         im = np.zeros([nrecs, nruns + 1])
