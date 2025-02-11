@@ -136,14 +136,14 @@ class MSAPostprocessor:
         # 3D building, process for 2 directions
         n_dir = 2
 
-        gm_levels = self._get_ground_motion_batches()
+        # gm_levels = self._get_ground_motion_batches()
 
         # outputs
         out = {}
 
         # For each level of excitation
-        for i in range(len(gm_levels)):
-            level = gm_levels[i]
+        for i in range(len(return_periods)):
+            level = str(return_periods[i])
 
             rp, im = self._get_rp_im(
                 level, i, return_periods, imls, coefs, hazard)
