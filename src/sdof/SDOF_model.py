@@ -32,7 +32,8 @@ def build(Fvect, Dvect, mass, damage):
 
     if damage:
         ops.uniaxialMaterial('HystereticSM', materialTag, '-posEnv', *
-                             positiveEnvelope, '-negEnv', *negativeEnvelope, '-damage', 0.1, 0.1)
+                             positiveEnvelope, '-negEnv', *negativeEnvelope,
+                             '-damage', 0.1, 0.1)
     else:
         ops.uniaxialMaterial('HystereticSM', materialTag, '-posEnv',
                              *positiveEnvelope, '-negEnv', *negativeEnvelope)
