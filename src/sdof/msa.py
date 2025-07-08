@@ -4,7 +4,7 @@ import openseespy.opensees as ops
 g = 9.81
 
 
-def run_sdof(properties, record, dt, mass, damping=0.05):
+def run_sdof(material, properties, record, dt, mass, damping=0.05):
     ops.wipe()
     ops.model('basic', '-ndm', 1, '-ndf', 1)
     ops.node(1, 0.)
@@ -12,7 +12,7 @@ def run_sdof(properties, record, dt, mass, damping=0.05):
     ops.mass(2, mass)
     ops.fix(1, 1)
 
-    ops.uniaxialMaterial("Hysteretic", 1, *properties)
+    ops.uniaxialMaterial(material, 1, *properties)
     ops.element("zeroLength", 1, 1, 2, "-mat",
                 1, "-dir", 1, "-doRayleigh", 1)
     lam = ops.eigen("-fullGenLapack", 1)
