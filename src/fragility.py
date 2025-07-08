@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 from .utilities import mlefit, spline, is_list_of_lists, \
     cdf_lognormal_norm
-from .plot_styles import *
+from plot_styles import FONTSIZE
 
 
 def plot_fragility(
