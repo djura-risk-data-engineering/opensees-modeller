@@ -9,7 +9,7 @@ from .msa import MSA
 from .ida import IDA
 
 from .utilities import (create_path, export_results,
-                        extract_tnodes_bnodes_nspa_file)
+                        extract_tnodes_bnodes)
 from .gm_records import get_records
 from ..Zagreb.model import build_model
 
@@ -91,7 +91,7 @@ class RCMRF:
         self.max_runs = max_runs
         self.workers = workers
 
-        tnode, bnode = extract_tnodes_bnodes_nspa_file()
+        tnode, bnode = extract_tnodes_bnodes()
         self.bnode = bnode
         self.tnode = tnode
 

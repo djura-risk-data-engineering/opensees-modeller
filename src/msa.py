@@ -5,7 +5,7 @@ import openseespy.opensees as op
 import numpy as np
 
 from .solution_algorithm import SolutionAlgorithm, apply_time_series
-from .utilities import append_record, extract_tnodes_bnodes_nspa_file
+from .utilities import append_record, extract_tnodes_bnodes
 from .mdof.model import build_model
 
 
@@ -64,7 +64,7 @@ class MSA:
         self.export_at_each_step = export_at_each_step
 
         if tnode is None and bnode is None:
-            tnode, bnode = extract_tnodes_bnodes_nspa_file()
+            tnode, bnode = extract_tnodes_bnodes()
         self.bnode = bnode
         self.tnode = tnode
 

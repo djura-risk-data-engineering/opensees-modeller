@@ -310,10 +310,9 @@ def cdf_lognormal_norm(xs, median: float, beta: float) -> np.ndarray:
     return prob
 
 
-def extract_tnodes_bnodes_nspa_file():
+def extract_tnodes_bnodes():
     """
-    Extracts 'tnodes' and 'bnodes' by searching for 'supports' and 'floors'
-    in a nspa.py file.
+    Extracts 'tnodes' and 'bnodes'
 
     Parameters:
     ----------
@@ -323,33 +322,6 @@ def extract_tnodes_bnodes_nspa_file():
     tuple
         A tuple containing 'tnodes' and 'bnodes'.
     """
-
-    file_path = Path(__file__).parent / "mdof" / "nspa.py"
-
-    # Parse the file
-    with open(file_path, 'r') as file:
-        tree = ast.parse(file.read())
-
-    supports, floors = None, None
-
-    # Iterate through assignment nodes in the file
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Assign):
-            for target in node.targets:
-                if isinstance(target, ast.Name):
-                    if target.id == "supports":
-                        supports = ast.literal_eval(node.value)
-                    elif target.id == "floors":
-                        floors = ast.literal_eval(node.value)
-
-        # Stop searching if both are found
-        if supports and floors:
-            break
-
-    # Compute tnodes and bnodes if supports and floors are found
-    if supports and floors:
-        tnodes = [floors, floors]
-        bnodes = [[supports[0]] + floors[:-1], [supports[0]] + floors[:-1]]
-        return tnodes, bnodes
-
-    raise ValueError("Supports or Floors not found in the file.")
+    tnodes = [[1111, 1112, 1113], [1111, 1112, 1113]]
+    bnodes = [[1110, 1111, 1112], [1110, 1111, 1112]]
+    return tnodes, bnodes
