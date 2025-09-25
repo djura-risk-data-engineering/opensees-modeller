@@ -186,8 +186,7 @@ class RCMRF:
         eigenvalue_analysis=None,
     ):
         modal_properties = self.get_modal_properties(eigenvalue_analysis)
-        print(modal_properties)
-        exit()
+
         damping = modal_properties['Damping'][0]
         omegas = modal_properties['CircFreq'][:2]
         period_cond = 2 * pi / asarray(omegas)
