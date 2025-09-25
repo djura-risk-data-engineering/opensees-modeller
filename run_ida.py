@@ -9,7 +9,7 @@ create_path(outputs_dir)
 
 gmdir = path / "data/IDA_Records"
 
-gmfilenames = ["names_x.txt", "names_y.txt"]
+gmfilenames = ["names_x.txt", "dts.txt"]
 
 model = RCMRF(
     analysis_options=["ida"],

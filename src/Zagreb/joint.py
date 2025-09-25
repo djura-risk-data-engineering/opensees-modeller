@@ -37,7 +37,7 @@ Engineering, Vol. 23, No.8, pp. 1262-1296 DOI: 10.1080/13632469.2017.1360224.
 
 import math
 import openseespy.opensees as ops
-from units import MPa
+from .units import MPa
 
 
 def joint_model(jtype, index, XYZ, M, col, bm, conc, bars, P, H, kappa, gamm,

@@ -43,7 +43,7 @@ American Society of Civil Engineers, Vol. 132, No.2, pp. 244-252.
 
 import math
 import openseespy.opensees as ops
-from units import MPa, mm
+from .units import MPa, mm
 
 
 def proc_uniaxial_pinching(

@@ -11,7 +11,7 @@ from .ida import IDA
 from .utilities import (create_path, export_results,
                         extract_tnodes_bnodes)
 from .gm_records import get_records
-from ..Zagreb.model import build_model
+from .Zagreb.model import build_model
 
 
 class RCMRF:
@@ -186,7 +186,8 @@ class RCMRF:
         eigenvalue_analysis=None,
     ):
         modal_properties = self.get_modal_properties(eigenvalue_analysis)
-
+        print(modal_properties)
+        exit()
         damping = modal_properties['Damping'][0]
         omegas = modal_properties['CircFreq'][:2]
         period_cond = 2 * pi / asarray(omegas)

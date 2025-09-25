@@ -22,11 +22,11 @@ import opsvis as opsv
 import matplotlib.pyplot as plt
 import numpy as np
 
-from units import mm, m
-from joint import joint_model
-from rcbc import rcbc_nonduct
-from infill import infill_model
-from analyses import do_modal, do_nspa
+from .units import mm, m
+from .joint import joint_model
+from .rcbc import rcbc_nonduct
+from .infill import infill_model
+from .analyses import do_modal, do_nspa
 
 INFILLS = 0
 OUTSDIR = "opensees_output"  # Output directory

@@ -7,7 +7,7 @@ The current Python method was adapted from tcl by Volkan Ozsarac
 """
 
 import math
-from units import pi, mm, MPa
+from .units import pi, mm, MPa
 import openseespy.opensees as ops
 
 

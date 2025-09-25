@@ -4,3 +4,5 @@ dump
 data/
 __pycache__/
 .vscode
+opensees_output/
+outs/

@@ -8,7 +8,7 @@ import multiprocessing as mp
 from .intensity_measure import IntensityMeasure
 from .solution_algorithm import SolutionAlgorithm, apply_time_series
 from .gm_records import get_ground_motion
-from .mdof.model import build_model
+from .Zagreb.model import build_model
 
 
 class IDA:
