@@ -13,5 +13,5 @@ inv_t = 50
 return_period = np.round(-inv_t / np.log(1 - np.array(poes))).astype(int).tolist()
 model = MSAPostprocessor(msa_path)
 
-out = model.postprocess(3, imls=imls, return_periods=return_period)
+out = model.postprocess(3, imls=imls, return_periods=return_period, n_dir=1)
 export_results(msa_path / "msa", out, "json")

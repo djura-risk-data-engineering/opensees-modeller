@@ -78,7 +78,7 @@ class MSAPostprocessor:
     def postprocess(
             self, nst: int, imls: List[float] = None,
             return_periods: List[float] = None, coefs: List[float] = None,
-            hazard=None) -> dict:
+            hazard=None, n_dir=2) -> dict:
         """Postprocess MSA outputs
 
         Parameters
@@ -133,9 +133,6 @@ class MSAPostprocessor:
                 imls is None:
             raise ValueError("Must provide either of: hazard, imls")
 
-        # 3D building, process for 2 directions
-        n_dir = 1
-
         # gm_levels = self._get_ground_motion_batches()
 
         # outputs
@@ -148,38 +145,58 @@ class MSAPostprocessor:
             rp, im = self._get_rp_im(
                 level, i, return_periods, imls, coefs, hazard)
 
-            out[level] = {
-                "1": {"PFA": {}, "disp": {}, "PSD": {}, "RPSD": {}},
-                "2": {"PFA": {}, "disp": {}, "PSD": {}, "RPSD": {}},
-                "SRSS": {"PFA": {}, "disp": {}, "PSD": {}, "RPSD": {}},
-                "return-period": rp,
-                'intensity-measure': im,
-            }
+            if n_dir == 2:
+                out[level] = {
+                    "1": {"PFA": {}, "disp": {}, "PSD": {}, "RPSD": {}},
+                    "2": {"PFA": {}, "disp": {}, "PSD": {}, "RPSD": {}},
+                    "SRSS": {"PFA": {}, "disp": {}, "PSD": {}, "RPSD": {}},
+                    "return-period": rp,
+                    'intensity-measure': im,
+                }
+                # For each direction
+                for d in range(n_dir):
+                    for st in range(nst + 1):
+                        out[level][str(d + 1)]["PFA"][st] = []
+                        out[level][str(d + 1)]["disp"][st] = []
+                        out[level]['SRSS']["PFA"][st] = []
+                        out[level]['SRSS']["disp"][st] = []
+                        if st != nst:
+                            out[level][str(d + 1)]["PSD"][st + 1] = []
+                            out[level][str(d + 1)]["RPSD"][st + 1] = []
+                            out[level]['SRSS']["PSD"][st + 1] = []
+                            out[level]['SRSS']["RPSD"][st + 1] = []
+
+                    out[level][str(d + 1)]["PFA"]["global"] = []
+                    out[level][str(d + 1)]["disp"]["global"] = []
+                    out[level][str(d + 1)]["PSD"]["global"] = []
+                    out[level][str(d + 1)]["RPSD"]["global"] = []
+
+                out[level]['SRSS']["PFA"]["global"] = []
+                out[level]['SRSS']["disp"]["global"] = []
+                out[level]['SRSS']["PSD"]["global"] = []
+                out[level]['SRSS']["RPSD"]["global"] = []
+            else:
+                out[level] = {
+                    "1": {"PFA": {}, "disp": {}, "PSD": {}, "RPSD": {}},
+                    "return-period": rp,
+                    'intensity-measure': im,
+                }
+
+                # For each direction
+                for d in range(n_dir):
+                    for st in range(nst + 1):
+                        out[level][str(d + 1)]["PFA"][st] = []
+                        out[level][str(d + 1)]["disp"][st] = []
+                        if st != nst:
+                            out[level][str(d + 1)]["PSD"][st + 1] = []
+                            out[level][str(d + 1)]["RPSD"][st + 1] = []
+
+                    out[level][str(d + 1)]["PFA"]["global"] = []
+                    out[level][str(d + 1)]["disp"]["global"] = []
+                    out[level][str(d + 1)]["PSD"]["global"] = []
+                    out[level][str(d + 1)]["RPSD"]["global"] = []
 
             print(f"[LEVEL] {level}, Return period {rp} years")
-
-            # For each direction
-            for d in range(n_dir):
-                for st in range(nst + 1):
-                    out[level][str(d + 1)]["PFA"][st] = []
-                    out[level][str(d + 1)]["disp"][st] = []
-                    out[level]['SRSS']["PFA"][st] = []
-                    out[level]['SRSS']["disp"][st] = []
-                    if st != nst:
-                        out[level][str(d + 1)]["PSD"][st + 1] = []
-                        out[level][str(d + 1)]["RPSD"][st + 1] = []
-                        out[level]['SRSS']["PSD"][st + 1] = []
-                        out[level]['SRSS']["RPSD"][st + 1] = []
-
-                out[level][str(d + 1)]["PFA"]["global"] = []
-                out[level][str(d + 1)]["disp"]["global"] = []
-                out[level][str(d + 1)]["PSD"]["global"] = []
-                out[level][str(d + 1)]["RPSD"]["global"] = []
-
-            out[level]['SRSS']["PFA"]["global"] = []
-            out[level]['SRSS']["disp"]["global"] = []
-            out[level]['SRSS']["PSD"]["global"] = []
-            out[level]['SRSS']["RPSD"]["global"] = []
 
             # for each record level
             for record in next(os.walk(self.msa / level))[-1]:
@@ -201,16 +218,19 @@ class MSAPostprocessor:
                     res_drift_global = 0
                     for st in range(nst + 1):
                         out[level]['SRSS']["PFA"][st].append(np.amax(pfa[st]))
-                        out[level]['SRSS']["disp"][st].append(np.amax(disp[st]))
+                        out[level]['SRSS']["disp"][st].append(
+                            np.amax(disp[st]))
                         if st != nst:
                             out[level]['SRSS']["PSD"][st + 1].append(
                                 np.amax(psd[st]))
 
                             res_drift_val = (
                                 self._compute_residual_drift(
-                                    abs(data[3][0][st]), abs(data[2][0][st]))**2 +
+                                    abs(data[3][0][st]),
+                                    abs(data[2][0][st]))**2 +
                                 self._compute_residual_drift(
-                                    abs(data[3][1][st]), abs(data[2][1][st]))**2
+                                    abs(data[3][1][st]),
+                                    abs(data[2][1][st]))**2
                             )**0.5
                             if res_drift_val > res_drift_global:
                                 res_drift_global = res_drift_val
