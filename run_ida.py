@@ -17,6 +17,7 @@ model = RCMRF(
     gm_folder=gmdir,
     gm_filenames=gmfilenames,
     dcap=5,
+    analysis_time_step=0.005,
 )
 
 model.modeller()

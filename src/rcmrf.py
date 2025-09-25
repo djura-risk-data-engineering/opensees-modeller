@@ -200,6 +200,7 @@ class RCMRF:
             omegas,
             period_cond,
             self.im_type,
+            dcap=self.dcap,
             analysis_time_step=self.analysis_time_step,
             sa_avg_bounds=self.sa_avg_bounds,
             max_runs=self.max_runs,
