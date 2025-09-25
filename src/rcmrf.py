@@ -234,7 +234,7 @@ class RCMRF:
         modal_properties = self.get_modal_properties(eigenvalue_analysis)
 
         damping = modal_properties['Damping'][0]
-        omegas = modal_properties['CircFreq'][:2]
+        omegas = modal_properties['CircFreq']
 
         records = get_records(
             self.gm_folder, self.gm_filenames, self.export_dir)
