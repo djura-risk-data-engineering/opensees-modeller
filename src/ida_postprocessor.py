@@ -253,9 +253,6 @@ class IDAPostprocessor:
         # Number of runs
         nruns = im_ida.shape[1]
 
-        # Loop for each direction for a 3D model
-        n_dir = n_dir
-
         # Initialize some variables
         im = np.zeros([nrecs, nruns + 1])
         idx = np.zeros([nrecs, nruns], dtype='i')

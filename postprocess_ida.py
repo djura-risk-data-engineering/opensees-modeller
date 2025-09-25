@@ -6,7 +6,7 @@ from src.utilities import export_results
 path = Path(__file__).resolve().parent
 
 ida_records = path / "data/IDA_Records"
-ida_path = path / "out/IDA"
+ida_path = path / "outs/IDA"
 
 
 p = IDAPostprocessor(
@@ -15,6 +15,6 @@ p = IDAPostprocessor(
     gm_folder=ida_records,
 )
 
-results, cache = p.postprocess()
+results, cache = p.postprocess(n_dir=1)
 
 export_results(ida_path / "ida", results, "json")
