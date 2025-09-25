@@ -66,7 +66,11 @@ def apply_time_series(
     # Time series excitation
     # op.timeSeries('Path', tstagx, '-dt', dt,
     #               '-filePath', str(pathx), '-factor', fx)
-    accx = list(np.loadtxt(pathx)[:, 1])
+    try:
+        accx = list(np.loadtxt(pathx)[:, 1])
+    except IndexError:
+        accx = list(np.loadtxt(pathx))
+
     op.timeSeries('Path', tstagx, '-dt', dt, '-values', *accx, '-factor', fx)
 
     op.pattern('UniformExcitation', ptagx, 1, '-accel', tstagx)
@@ -74,7 +78,11 @@ def apply_time_series(
     if pathy is not None:
         # op.timeSeries('Path', tstagy, '-dt', dt,
         #               '-filePath', str(pathy), '-factor', fy)
-        accy = list(np.loadtxt(pathy)[:, 1])
+        try:
+            accy = list(np.loadtxt(pathy)[:, 1])
+        except IndexError:
+            accy = list(np.loadtxt(pathy))
+
         op.timeSeries('Path', tstagy, '-dt', dt, '-values', *accy,
                       '-factor', fy)
         op.pattern('UniformExcitation', ptagy, 2, '-accel', tstagy)
