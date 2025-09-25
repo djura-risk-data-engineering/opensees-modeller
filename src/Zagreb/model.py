@@ -34,12 +34,13 @@ NUMMODES = 5  # Number of Modes to Compute
 SF = 1.5  # Model Scale Factor
 
 
-def build_model(infills=0, outsdir="opensees_output", sf=1.5):
+def build_model(infills=0, outsdir="", sf=1.5):
     # -------------------------------
     # Setup / output folder
     # -------------------------------
     ops.wipe()
-    os.makedirs(outsdir, exist_ok=True)
+    if outsdir:
+        os.makedirs(outsdir, exist_ok=True)
 
     # -------------------------------
     # Model def: 3D, 6 dof/node
@@ -192,9 +193,14 @@ def build_model(infills=0, outsdir="opensees_output", sf=1.5):
     # Open a set of files so that the properties of the beams, columns and
     # joint elements creted using the provided procedures can be examined
     # later.
-    pfile_jnts = open(os.path.join(outsdir, "Properties_joints.txt"), "w")
-    pfile_bms = open(os.path.join(outsdir, "Properties_beams.txt"), "w")
-    pfile_cols = open(os.path.join(outsdir, "Properties_columnn.txt"), "w")
+    if outsdir:
+        pfile_jnts = open(os.path.join(outsdir, "Properties_joints.txt"), "w")
+        pfile_bms = open(os.path.join(outsdir, "Properties_beams.txt"), "w")
+        pfile_cols = open(os.path.join(outsdir, "Properties_columnn.txt"), "w")
+    else:
+        pfile_jnts = None
+        pfile_bms = None
+        pfile_cols = None
 
     # -------------------------------
     # Joints
@@ -433,9 +439,10 @@ def build_model(infills=0, outsdir="opensees_output", sf=1.5):
     print("Elements created")
 
     # Close property files
-    pfile_jnts.close()
-    pfile_bms.close()
-    pfile_cols.close()
+    if outsdir:
+        pfile_jnts.close()
+        pfile_bms.close()
+        pfile_cols.close()
 
     # -------------------------------
     # Boundary conditions
@@ -456,12 +463,13 @@ def build_model(infills=0, outsdir="opensees_output", sf=1.5):
     # -------------------------------
     # Print model to file
     # -------------------------------
-    model_path = os.path.join(outsdir, "model.txt")
-    try:
-        os.remove(model_path)
-    except FileNotFoundError:
-        pass
-    ops.printModel('-file', model_path)
+    if outsdir:
+        model_path = os.path.join(outsdir, "model.txt")
+        try:
+            os.remove(model_path)
+        except FileNotFoundError:
+            pass
+        ops.printModel('-file', model_path)
 
     # -------------------------------
     # Gravity analysis

@@ -1,6 +1,9 @@
 from pathlib import Path
 import zipfile
+import math
 
+
+inv_t = 50
 path = Path(__file__).parent
 
 # Folder containing your .zip files
@@ -45,3 +48,9 @@ for zip_path in zip_folder.glob("*.zip"):
     with dts_file.open("w") as f:
         for dt in dts:
             f.write(f"{dt}\n")
+
+    # Step 4: Rename the folder names by return period
+    poe = float(str(subfolder.relative_to(extract_to)).split('_')[1])
+    rt = round(-inv_t / math.log(1 - poe))
+    new_path = extract_to / str(rt)
+    subfolder.rename(new_path)

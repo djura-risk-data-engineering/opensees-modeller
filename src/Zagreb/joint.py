@@ -41,7 +41,7 @@ from .units import MPa
 
 
 def joint_model(jtype, index, XYZ, M, col, bm, conc, bars, P, H, kappa, gamm,
-                hyst, pfile, pflag=0):
+                hyst, pfile=None, pflag=0):
     """
     Method to create RC Beam-Column Joint model in OpenSeesPy
 
@@ -237,14 +237,15 @@ def joint_model(jtype, index, XYZ, M, col, bm, conc, bars, P, H, kappa, gamm,
         print(f"gamma: {gamm[0]:.4f} {gamm[1]:.4f} {gamm[2]:.4f} rad")
 
     # File log (format mirrors Tcl order; note the original mixes X/Y lists)
-    print((
-        f"Element {ET} "
-        f"MjX:{MjY[0]:.2f} {MjY[1]:.2f} {MjY[2]:.2f} {-MjY[3]:.2f} "
-        f"{-MjY[4]:.2f} {-MjY[5]:.2f} "
-        f"MjY: {MjX[0]:.2f} {MjX[1]:.2f} {MjX[2]:.2f} {-MjX[3]:.2f} "
-        f"{-MjX[4]:.2f} {-MjY[5]:.2f} "
-        f"gamma: {gamm[0]:.4f} {gamm[1]:.4f} {gamm[2]:.4f}"
-    ), file=pfile)
+    if pfile:
+        print((
+            f"Element {ET} "
+            f"MjX:{MjY[0]:.2f} {MjY[1]:.2f} {MjY[2]:.2f} {-MjY[3]:.2f} "
+            f"{-MjY[4]:.2f} {-MjY[5]:.2f} "
+            f"MjY: {MjX[0]:.2f} {MjX[1]:.2f} {MjX[2]:.2f} {-MjX[3]:.2f} "
+            f"{-MjX[4]:.2f} {-MjY[5]:.2f} "
+            f"gamma: {gamm[0]:.4f} {gamm[1]:.4f} {gamm[2]:.4f}"
+        ), file=pfile)
 
     # Optional: return some useful values
     return {

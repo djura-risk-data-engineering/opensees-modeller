@@ -540,7 +540,7 @@ def rcbc_nonduct(
                   f"gamm_uzz:{gamm_uzz:.4f} gamm_mzz:{gamm_mzz:.4f}")
 
     # File print (compact)
-    if ST > 1:
+    if ST > 1 and pfile:
         print((
             f"Element {ET} between nodes {iNode} and {jNode} "
             f"Myp1zz: {Myp1zz:.1f} kNm Myp2zz: {Myp2zz:.1f} kNm "
@@ -576,7 +576,7 @@ def rcbc_nonduct(
             f"gamm_uzz:{gamm_uzz:.10f} gamm_mzz:{gamm_mzz:.10f} "
             f"nu:{nu:.3f} EIcr,zz/EIg {EIrzz:.3f}   EIcr,yy/EIg {EIryy:.3f}"
         ), file=pfile)
-    else:
+    elif pfile:
         print((
             f"Element {ET} between nodes {iNode} and {jNode} "
             f"Myp1zz: {Myp1zz:.1f} kNm Myp2zz: {Myp2zz:.1f} kNm "
