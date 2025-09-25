@@ -3,7 +3,7 @@ from src.rcmrf import RCMRF
 from src.utilities import create_path
 
 
-path = Path.cwd()
+path = Path(__file__).parent
 outputs_dir = path / "outs"
 create_path(outputs_dir)
 

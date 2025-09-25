@@ -5,7 +5,7 @@ from src.rcmrf import RCMRF
 
 
 if __name__ == "__main__":
-    path = Path.cwd()
+    path = Path(__file__).parent
     outputs_dir = path / "outs"
     gmdir = path / "data/MSA_Records"
     gmfilenames = ["GMR_filenames.txt", "GMR_dts.txt"]
@@ -32,4 +32,4 @@ if __name__ == "__main__":
         analysis_time_step=0.005
     )
 
-    msa.start(records, workers=4)
+    msa.start(records, workers=12)
