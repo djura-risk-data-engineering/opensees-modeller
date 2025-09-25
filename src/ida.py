@@ -152,7 +152,7 @@ class IDA:
                 output_path / f"Record{rec + 1}_Run{j}.pickle", "wb"
             ) as handle:
                 pickle.dump(self.outputs[rec][j], handle)
-            # np.savetxt(im_filename, self.im_output, delimiter=',')
+            np.savetxt(im_filename, self.im_output, delimiter=',')
 
         return th.collapse_index
 

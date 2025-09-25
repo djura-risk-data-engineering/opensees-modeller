@@ -5,8 +5,8 @@ from src.utilities import export_results
 
 path = Path(__file__).resolve().parent
 
-ida_records = path / "assets/SeismicAnalysis/IDA"
-ida_path = path / "assets/SeismicAnalysis/NLTHAout/IDA_outputs"
+ida_records = path / "data/IDA_Records"
+ida_path = path / "out/IDA"
 
 
 p = IDAPostprocessor(
