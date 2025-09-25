@@ -35,12 +35,13 @@ for zip_path in zip_folder.glob("*.zip"):
                 second = f.readline().strip()
                 v1 = float(first.split()[0])
                 v2 = float(second.split()[0])
-                dts.append(round(v2 - v1, 5))
+                dt = float(v2 - v1)
+                dts.append(dt)
 
     # Step 3: Write all file names to GMR_filenames.txt
     output_file = subfolder / "GMR_filenames.txt"
     with output_file.open("w") as f:
-        for filename in sorted(all_files):
+        for filename in all_files:
             f.write(filename + "\n")
 
     # Step 4: Write all dt values to GMR_dts.txt
