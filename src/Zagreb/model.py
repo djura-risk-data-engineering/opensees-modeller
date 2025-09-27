@@ -18,20 +18,12 @@ Engineering, Vol. 23, No.8, pp. 1262-1296 DOI: 10.1080/13632469.2017.1360224.
 
 import os
 import openseespy.opensees as ops
-import opsvis as opsv
-import matplotlib.pyplot as plt
-import numpy as np
 
 from .units import mm, m
 from .joint import joint_model
 from .rcbc import rcbc_nonduct
 from .infill import infill_model
 from .analyses import do_modal, do_nspa
-
-INFILLS = 0
-OUTSDIR = "opensees_output"  # Output directory
-NUMMODES = 5  # Number of Modes to Compute
-SF = 1.5  # Model Scale Factor
 
 
 def build_model(infills=0, outsdir="", sf=1.5):
@@ -506,12 +498,12 @@ def build_model(infills=0, outsdir="", sf=1.5):
     print("Gravity analysis completed")
 
 
-def run_nspa():
+def run_nspa(infills=0, outsdir="", sf=1.5):
 
     # --------------------------------------
     # BUILD MODEL
     # --------------------------------------
-    build_model(INFILLS, OUTSDIR, SF)
+    build_model(infills, outsdir, sf)
 
     # -------------------------------
     # Lateral loading
@@ -528,11 +520,11 @@ def run_nspa():
     # --------------------------------------
     # Nodes
     ops.recorder(
-        "Node", "-file", f"{OUTSDIR}/displacement.txt",
+        "Node", "-file", f"{outsdir}/displacement.txt",
         "-node", 1111, 1112, 1113, "-dof", 1, "disp"
     )
     ops.recorder(
-        "Node", "-file", f"{OUTSDIR}/reaction.txt",
+        "Node", "-file", f"{outsdir}/reaction.txt",
         "-node", 1110, 1210, 1310, 1410, "-dof", 1, "reaction"
     )
     # # Hinges
@@ -585,43 +577,20 @@ def run_nspa():
     # NONLINEAR STATIC PUSHOVER ANALYSIS
     # --------------------------------------
     dref = 0.04      # reference displacement
-    mu = 5          # multiple of dref
+    mu = 6          # multiple of dref
     ctrl_node = 1113  # control node
     disp_dir = 1      # displacement direction
     n_steps = 2000     # number of steps
     do_nspa(dref, mu, ctrl_node, disp_dir, n_steps)
 
 
-def run_modal():
+def run_modal(infills=0, outsdir="", sf=1.5, num_modes=5):
     # --------------------------------------
     # BUILD MODEL
     # --------------------------------------
-    build_model(INFILLS, OUTSDIR, SF)
+    build_model(infills, outsdir, sf)
 
     # --------------------------------------
     # MODAL ANALYSIS
     # --------------------------------------
-    do_modal(NUMMODES, OUTSDIR)
-
-
-if __name__ == "__main__":
-
-    build_model(INFILLS)
-    opsv.plot_model(node_labels=0, element_labels=0)
-    plt.show()
-
-    run_modal()
-    run_nspa()
-
-    storey_height = 2 * m
-    total_weight = 204
-    base_shear = np.loadtxt(os.path.join(OUTSDIR, 'reaction.txt'))
-    disp = np.loadtxt(os.path.join(OUTSDIR, 'displacement.txt'))
-    shear = -np.sum(base_shear, axis=1)
-    shear_coeff = shear / (total_weight * SF)
-    drifts = np.insert(disp, 0, 0, axis=1)
-    drifts = np.diff(drifts, axis=1) / (storey_height * SF)
-    max_drifts = np.max(drifts, axis=1)
-
-    plt.plot(max_drifts, shear_coeff)
-    plt.show()
+    do_modal(num_modes, outsdir)
