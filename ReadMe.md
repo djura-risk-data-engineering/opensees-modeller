@@ -2,31 +2,29 @@
 To clone the repository (do this only once)
 ```shell
 git clone https://github.com/davitshahnazaryan3/opensees-modeller-mp.git
+git switch zagreb2025
 ```
 
-You need to create this only once
+To create the virtual environment (do this only once):
 ```shell
-conda create --name venv
-conda activate venv
-conda install --file requirements.txt
+py -3.12 -m venv .venv
+.venv\Scripts\activate
+python -m pip install --upgrade pip
 ```
 
-To deactivate virutal environment
+Activate the virtual environment:
 ```shell
-conda deactivate
+.venv\Scripts\activate
+python -m pip install --upgrade pip
 ```
 
-To run the MSA WITHOUT multiprocessor
+Upgrade pip (do this only once):
+```shell
+.venv\Scripts\activate
+python -m pip install --upgrade pip
+```
+
+To test if all installed correctly, run:
 ```shell
 python main.py
-```
-
-To run the MSA with multiprocessor
-```shell
-python main_mp.py
-```
-
-To run the MSA postprocessor
-```shell
-python postprocess.py
 ```
