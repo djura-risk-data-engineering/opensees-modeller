@@ -8,8 +8,6 @@ git switch zagreb2025
 To create the virtual environment (do this only once):
 ```shell
 py -3.12 -m venv .venv
-.venv\Scripts\activate
-python -m pip install --upgrade pip
 ```
 
 Activate the virtual environment:
