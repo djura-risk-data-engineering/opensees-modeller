@@ -13,12 +13,10 @@ py -3.12 -m venv .venv
 Activate the virtual environment:
 ```shell
 .venv\Scripts\activate
-python -m pip install --upgrade pip
 ```
 
 Upgrade pip (do this only once):
 ```shell
-.venv\Scripts\activate
 python -m pip install --upgrade pip
 ```
 
