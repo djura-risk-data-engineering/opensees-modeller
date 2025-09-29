@@ -2,7 +2,7 @@ import os
 import openseespy.opensees as ops
 
 
-def do_modal(numModes=5, outsdir=''):
+def do_modal(numModes=5, outsdir='', nodes=[]):
     """Perform modal analysis
 
     Parameters
@@ -14,6 +14,18 @@ def do_modal(numModes=5, outsdir=''):
     """
     ops.wipeAnalysis()
     ops.eigen(numModes)  # returns list of eigenvalues
+    # Print the eigen vectors
+    for i in range(1, numModes + 1):
+        modal_disps = []
+        for node in nodes:
+            disps = ', '.join([
+                f'{disp}' for disp in ops.nodeEigenvector(node, i)
+            ])
+            modal_disps.append(f'{node}, {disps}')
+        modal_disps = '\n'.join(modal_disps)
+        eigen_path = os.path.join(outsdir, f'EigenVectors_Mode{i}.txt')
+        with open(eigen_path, 'w') as file:
+            file.write(modal_disps)
     report_file = os.path.join(outsdir, "ModalProperties.txt")
     ops.modalProperties('-print', '-file', report_file, '-unorm')
 

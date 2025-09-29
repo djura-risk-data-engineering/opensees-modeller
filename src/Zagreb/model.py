@@ -593,4 +593,5 @@ def run_modal(infills=0, outsdir="", sf=1.5, num_modes=5):
     # --------------------------------------
     # MODAL ANALYSIS
     # --------------------------------------
-    do_modal(num_modes, outsdir)
+    nodes = [1111, 1112, 1113]
+    do_modal(num_modes, outsdir, nodes)
