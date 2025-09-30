@@ -22,5 +22,6 @@ python -m pip install --upgrade pip
 
 To test if all installed correctly, run:
 ```shell
-python main.py
+python welcome.py
+python build_model.py
 ```
