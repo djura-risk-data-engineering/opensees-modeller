@@ -18,3 +18,4 @@ p = IDAPostprocessor(
 results, cache = p.postprocess(n_dir=1)
 
 export_results(ida_path / "ida", results, "json")
+export_results(ida_path / "ida", cache, "pickle")
