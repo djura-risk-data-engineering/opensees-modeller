@@ -21,9 +21,9 @@ for i in range(3):
     # Eigen vector in X-dir
     fi_x = np.append(0, eigen_vectors[:, 1])
     # Normalize eigen vector for the ith mode
-    fi_x = fi_x / np.max(np.abs(fi_x)) 
+    fi_x = fi_x / np.max(np.abs(fi_x))
     # plot mode shape
-    plt.plot(fi_x, storeys, label=f'Mode-{i+1}')  
+    plt.plot(fi_x, storeys, label=f'Mode-{i+1}')
     # Set y-axis label
     plt.ylabel('Storey ID')
     # Set x-axis label
