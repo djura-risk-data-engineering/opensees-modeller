@@ -14,7 +14,7 @@ storeys = [0, 1, 2, 3]
 
 # Loop through each mode
 for i in range(3):
-    # Read the eigenvectors the ith mode 
+    # Read the eigenvectors the ith mode
     # Each row contains: node id, ux, uy, uz, rx, ry, rz
     eigen_vectors = np.loadtxt(f'outputs\\EigenVectors_Mode{i+1}.txt',
                                delimiter=',')
