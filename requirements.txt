@@ -1,6 +1,6 @@
 numpy==2.3.3
-scipy
-matplotlib
-pyDOE
+scipy==1.15.1
+matplotlib==3.10.6
+pyDOE==0.3.8
 openseespy==3.7.1.2
 opsvis==1.2.31
