@@ -19,7 +19,8 @@ def plot_fragility(
     labels: List[str] = None,
     linestyles: List[str] = None,
     colors: List[str] = None,
-    figsize=(4, 3)
+    figsize=(4, 3),
+    show=True
 ):
     """Fragility plotter
 
@@ -139,7 +140,8 @@ def plot_fragility(
         frame.set_linewidth(0)
 
     plt.tight_layout()
-    plt.show()
+    if show:
+        plt.show()
 
     return fig, ax
 

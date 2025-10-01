@@ -1,9 +1,8 @@
 import numpy as np
 import json
-from scipy import stats
+import matplotlib.pyplot as plt
 from pathlib import Path
-from src.demolition import Demolition
-from src.fragility import plot_fragility, Fragility, retrieve_demand_for_calc
+from src.fragility import plot_fragility, Fragility
 from src.demand import Demand, convert_demands, convert_list_to_ndarray
 from src.utilities import export_results
 
@@ -14,7 +13,7 @@ fit = 'msa'
 
 frags = {}
 
-msa_path = path / 'outs'
+msa_path = path / "data/MSA-outs"
 filename = msa_path / "msa.json"
 demands = json.load(open(filename))
 demands = convert_demands(demands)
@@ -53,13 +52,15 @@ for i, threshold in enumerate(drift_thresholds):
 
 # Plotting a fragility function
 fig, ax = plot_fragility(
-    iml_range, "SA(0.5) [g]", mean=medians, std=betas, colors=colors
+    iml_range, "SA(0.5) [g]", mean=medians, std=betas, colors=colors,
+    show=False
 )
 for i in range(4):
     ax.scatter(
         frags[f"DLS-{i+1}"]["imls"], frags[f"DLS-{i+1}"]["ecdf"],
         color=colors[i]
     )
-# ax.legend()
+ax.legend()
 export_results(msa_path / f"frags_{fit}", frags, "json")
 fig.savefig(msa_path / f"frag_{fit}.svg", bbox_inches="tight", format="svg")
+plt.show()
