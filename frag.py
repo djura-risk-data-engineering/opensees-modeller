@@ -29,7 +29,7 @@ iml_range = frag_obj.iml_range
 
 # Collapse fragility
 ff = frag_obj.collapse_capacity(
-    demands, dcap=5, fit='ida', n_dir=1
+    demands, dcap=2.0, fit='ida', n_dir=1
 )
 
 # Plotting a fragility function
@@ -37,7 +37,7 @@ x = np.linspace(0, 4, 100)
 mean = ff['median']
 std = ff['beta']
 colors = ['r']
-fig, ax = plot_fragility(x, "EDP",
+fig, ax = plot_fragility(x, "IM",
                          mean=mean,
                          std=std,
                          colors=colors)
