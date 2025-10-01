@@ -17,23 +17,26 @@ im_qtile = data["im_qtile_psd"]
 im = data["im"]
 im_spl = data["im_spl_psd"]
 drifts = data["drift"]
+label_i = "Ind. records"
 
 for rec in range(im_spl.shape[0]):
     plt.plot(drifts[rec], im[rec], grayscale[-1],
-             marker='o', linewidth=0.2, markersize=2)
-    plt.plot(drift_range, im_spl[rec], grayscale[-1], linewidth=0.2)
+             marker='o', linewidth=1, markersize=2)
+    plt.plot(drift_range, im_spl[rec], grayscale[-1], linewidth=1,
+             label=label_i)
+    label_i = None
 plt.plot(drift_range, im_qtile[2], color=color_grid[8],
-         label="84th quantile", ls="-.")
+         label="84th quantile", ls="-.", linewidth=2)
 plt.plot(drift_range, im_qtile[1], color=color_grid[6],
-         label="50th quantile", ls="--")
+         label="50th quantile", ls="--", linewidth=2)
 plt.plot(drift_range, im_qtile[0],
-         color=color_grid[3], label="16th quantile", ls="-")
+         color=color_grid[3], label="16th quantile", ls="-", linewidth=2)
 
 plt.xlabel("PSD, [%]", fontsize=FONTSIZE)
 plt.ylabel("Sa, [g]", fontsize=FONTSIZE)
 plt.rc('xtick', labelsize=FONTSIZE)
 plt.rc('ytick', labelsize=FONTSIZE)
 plt.grid(True, which="major", ls="--", lw=0.8, dashes=(5, 10))
-plt.legend(frameon=False, loc='upper right',
-           fontsize=FONTSIZE, bbox_to_anchor=(1.5, 1))
+plt.legend(frameon=False, loc='best',
+           fontsize=FONTSIZE)
 plt.show()
