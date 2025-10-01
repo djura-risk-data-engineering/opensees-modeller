@@ -19,7 +19,7 @@ edps = plotter.get_edp(1, 'global', 'psd', rps)
 plotter.plot_vs_rp(edps, rps, xlabel='MIDR [%]', ylabel='Return Period')
 for i in range(4):
     plt.axvline(x=tresholds[i], color=colors[i], linestyle="--",
-                lw=3, label=(f'DLS-{i + 1}'))
+                lw=2, label=(f'DLS-{i + 1}'))
 plt.xlim(left=0)
 plt.ylim([min(rps)*0.9, max(rps)*1.1])
 plt.legend()

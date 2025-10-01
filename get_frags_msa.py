@@ -60,7 +60,7 @@ for i in range(4):
         frags[f"DLS-{i+1}"]["imls"], frags[f"DLS-{i+1}"]["ecdf"],
         color=colors[i]
     )
-ax.legend()
+
 export_results(msa_path / f"frags_{fit}", frags, "json")
 fig.savefig(msa_path / f"frag_{fit}.svg", bbox_inches="tight", format="svg")
 plt.show()
