@@ -164,7 +164,10 @@ if __name__ == '__main__':
             loss = 0.0  # total building loss per record for the group
             for st in range(1, nst + 1):
                 x = np.array(demands[str(st)])
-                st_loss = multiplier * method(x, coeffs)  # Storey loss
+                if edp == 'PSD':
+                    st_loss = multiplier * method(x*100, coeffs)  # Storey loss
+                elif edp == 'PFA':
+                    st_loss = multiplier * method(x, coeffs)  # Storey loss
                 loss += st_loss  # add to total building loss
             # Compute the mean from losses obtained for all records
             mean_loss = np.mean(loss)
