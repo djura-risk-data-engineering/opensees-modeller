@@ -135,7 +135,7 @@ if __name__ == '__main__':
 
     # INITIALIZE SOME PARAMETERS
     rts = []
-    mafe_hz = []
+    mafe = []
     imls = []
     s_mean_losses_nc = []  # E[L_S|NC,IM]
     ns_mean_losses_nc = []  # E[L_NS|NC,IM]
@@ -183,7 +183,7 @@ if __name__ == '__main__':
         tot_mean_losses_nc.append(float(s_mean_loss+ns_mean_loss))
         rts.append(msa_data[rt]['return-period'])
         imls.append(msa_data[rt]['intensity-measure'])
-        mafe_hz.append(1 / rts[-1])
+        mafe.append(1 / rts[-1])
 
     # COMPUTE FINAL TOTAL LOSS E[L_T|IM]
     p_c = stats.norm.cdf(
@@ -205,7 +205,7 @@ if __name__ == '__main__':
     plt.close()
 
     # PLOT LOSS CURVE
-    plt.plot(tot_mean_losses, mafe_hz, label='E[L_T|IM]')
+    plt.plot(tot_mean_losses, mafe, label='E[L_T|IM]')
     plt.xlabel('Expected loss [EUR]')
     plt.ylabel('Mean Annual Frequency of Exceedance')
     plt.legend()
