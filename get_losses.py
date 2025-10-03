@@ -134,20 +134,20 @@ if __name__ == '__main__':
     rc = 1000000  # replacement cost
 
     # INITIALIZE SOME PARAMETERS
-    rts = []
-    mafe = []
-    imls = []
+    rps = []  # Return periods (considered in MSA)
+    mafe = []  # Mean annual frequence of exceedance (considered in MSA)
+    imls = []  # Intensity measure levels (considered in MSA)
     s_mean_losses_nc = []  # E[L_S|NC,IM]
     ns_mean_losses_nc = []  # E[L_NS|NC,IM]
     tot_mean_losses_nc = []  # E[L_T|NC,IM]
     ns_keys = ['2 - NS: PSD', '3 - NS: PFA']
     s_keys = ['1 - S: PSD']
-
-    for rt in msa_data.keys():
-        s_loss = 0.0
-        ns_loss = 0.0
-        s_mean_loss = 0.0
-        ns_mean_loss = 0.0
+    # Loop through each return period
+    for rp in msa_data.keys():
+        s_loss = 0.0  # initialise losses from structural comp.
+        ns_loss = 0.0  # initialise losses from non-structural comp.
+        s_mean_loss = 0.0  # initialise mean losses from structural comp.
+        ns_mean_loss = 0.0  # initialise mean losses from non-structural comp.
         for group in groups:
             # Get regression parameters
             method = methods.get(edp_dv[group]['regression'])
@@ -160,7 +160,7 @@ if __name__ == '__main__':
             elif 'PFA' in group:
                 edp = 'PFA'
             # Assemble the losses for non-collapse cases
-            demands = msa_data[rt][direction]['PFA']
+            demands = msa_data[rp][direction]['PFA']
             loss = 0.0  # total building loss per record for the group
             for st in range(1, nst + 1):
                 x = np.array(demands[str(st)])
@@ -174,13 +174,13 @@ if __name__ == '__main__':
             elif group in ns_keys:
                 ns_loss += loss
                 ns_mean_loss += mean_loss
-
+        # Append results for current rt
         s_mean_losses_nc.append(float(s_mean_loss))
         ns_mean_losses_nc.append(float(ns_mean_loss))
         tot_mean_losses_nc.append(float(s_mean_loss+ns_mean_loss))
-        rts.append(msa_data[rt]['return-period'])
-        imls.append(msa_data[rt]['intensity-measure'])
-        mafe.append(1 / rts[-1])
+        rps.append(msa_data[rp]['return-period'])
+        imls.append(msa_data[rp]['intensity-measure'])
+        mafe.append(1 / rps[-1])
 
     # COMPUTE FINAL TOTAL LOSS E[L_T|IM]
     p_c = stats.norm.cdf(
@@ -190,22 +190,20 @@ if __name__ == '__main__':
     p_nc = 1 - p_c  # P[NC|IM]
     tot_mean_losses_c = rc * np.ones_like(p_c)
     tot_mean_losses = (p_c * tot_mean_losses_c +
-                       p_nc * np.array(tot_mean_losses_nc))
+                       p_nc * np.array(tot_mean_losses_nc))  # E[L_T|IM]
 
     # PLOT VULNERABILITY CURVE
-    plt.plot(imls, tot_mean_losses/rc, label='E[L_T|IM]')
-    plt.ylabel('Expected loss ratio')
+    plt.plot(imls, tot_mean_losses / rc * 100)
+    plt.ylabel('Expected loss ratio [%]')
     plt.xlabel('Intensity Measure, IM')
-    plt.legend()
     plt.savefig(path / "vulnerability.svg", bbox_inches="tight", format="svg")
     plt.show()
     plt.close()
 
     # PLOT LOSS CURVE
-    plt.plot(tot_mean_losses, mafe, label='E[L_T|IM]')
-    plt.xlabel('Expected loss [EUR]')
+    plt.plot(tot_mean_losses / rc * 100, mafe)
+    plt.xlabel('Expected loss ratio [%]')
     plt.ylabel('Mean Annual Frequency of Exceedance')
-    plt.legend()
     plt.savefig(path / "loss.svg", bbox_inches="tight", format="svg")
     plt.show()
     plt.close()
@@ -213,15 +211,14 @@ if __name__ == '__main__':
     # PLOT HAZARD CURVE
     mafe_hz = Hazard().get_mafe(poe=hazard_poes)
     hazard = {'s': np.array(hazard_imls), 'mafe': mafe_hz}
-    plt.loglog(hazard_imls, mafe_hz, label='eshm20-hazard')
+    plt.loglog(hazard_imls, mafe_hz)
     plt.ylabel('Mean Annual Frequency of Exceedance')
     plt.xlabel('Intensity Measure, IM')
-    plt.legend()
     plt.savefig(path / "hazard.svg", bbox_inches="tight", format="svg")
     plt.show()
     plt.close()
 
-    # COMPUTE EAL
+    # COMPUTE EXPECTED ANNUAL LOSS RATIO
     eal_ratio, cache = get_eal(
         np.array(imls), np.array(tot_mean_losses), hazard, rc=rc
     )
@@ -229,7 +226,7 @@ if __name__ == '__main__':
 
     # SAVE DATA
     cache['EALR'] = eal_ratio
-    cache['RC'] = rc
+    cache['RepCost'] = rc
     loss = {
         'msa-imls': imls,
         'msa-mafe': mafe_hz,
