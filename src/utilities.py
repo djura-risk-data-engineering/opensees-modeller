@@ -160,7 +160,7 @@ def read_txt(path):
 
 
 def mlefit_ida(median: float, dispersion: float, total_count: int, count: int,
-           data) -> float:
+               data) -> float:
     """Maximum likelihood method
     Performs a lognormal cumulative distribution function fit to the data
     points based on maximum likelihood method
@@ -205,7 +205,8 @@ def mlefit_msa(points, trials, observations, initial_guess=None):
     """
     Details
     -------
-    Applies maximum likelihood estimation to determine lognormal distribution parameters.
+    Applies maximum likelihood estimation to determine lognormal distribution
+    parameters.
     Here, log-normal distribution represents the fragility curve.
 
     References
@@ -231,7 +232,8 @@ def mlefit_msa(points, trials, observations, initial_guess=None):
     Example
     -------
     Same as on Baker's video: https://www.youtube.com/watch?v=Q8e0_d81a40
-    mle_fit(im=[0.2,0.3,0.4,0.6,0.7,0.8,0.9,1.0], trials = 40, obs = [0,0,0,4,6,13,12,16])
+    mle_fit(im=[0.2,0.3,0.4,0.6,0.7,0.8,0.9,1.0], trials = 40, obs =
+    [0,0,0,4,6,13,12,16])
     output: array([1.07611623, 0.42923779])
     """
 
@@ -244,23 +246,27 @@ def mlefit_msa(points, trials, observations, initial_guess=None):
     def func(x):
         theta, beta = x
         # poes = observations / trials
-        # evaluates the probability calculated under the initial assumption of theta and beta
+        # evaluates the probability calculated under the initial assumption of
+        # theta and beta
         poes_fitted = stats.lognorm.cdf(points, beta, scale=theta)
         # calculates the likelihood of the parameters being correct
         likelihood = stats.binom.pmf(k=observations, n=trials, p=poes_fitted)
-        likelihood[likelihood <= 0] = 1e-200  # do not assign zero, assign zero like value
+        # do not assign zero, assign zero like value
+        likelihood[likelihood <= 0] = 1e-200
         # sum of the logs of the likelihood to be minimized
         return -np.sum(np.log(likelihood))
 
-    # this finds a solution, bounds prevent negative values, check documentation for other settings
+    # this finds a solution, bounds prevent negative values, check
+    # documentation for other settings
     try:
-        sol = minimize(func, x0=initial_guess, method='SLSQP', bounds=((0, None), (0, None)))
-    except:
+        sol = minimize(func, x0=initial_guess, method='SLSQP',
+                       bounds=((0, None), (0, None)))
+    except (ValueError, RuntimeError, FloatingPointError):
         initial_guess = [1.0, 0.5]
-        sol = minimize(func, x0=initial_guess, method='SLSQP', bounds=((0, None), (0, None)))
+        sol = minimize(func, x0=initial_guess, method='SLSQP',
+                       bounds=((0, None), (0, None)))
 
     return sol.x
-
 
 
 def spline(x, y, size: int = 1000) -> tuple[np.ndarray, np.ndarray]:

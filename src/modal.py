@@ -42,6 +42,7 @@ class Modal:
         """
         lam = None
         try:
+            op.wipeAnalysis()
             lam = op.eigen(self.num_modes)
         except Exception:
             print('[Warning] Eigensolver failed, trying genBandArpack...')

@@ -19,7 +19,8 @@ def plot_fragility(
     labels: List[str] = None,
     linestyles: List[str] = None,
     colors: List[str] = None,
-    figsize=(4, 3)
+    figsize=(4, 3),
+    show=True
 ):
     """Fragility plotter
 
@@ -139,7 +140,8 @@ def plot_fragility(
         frame.set_linewidth(0)
 
     plt.tight_layout()
-    plt.show()
+    if show:
+        plt.show()
 
     return fig, ax
 
@@ -177,7 +179,7 @@ class Fragility:
 
     def collapse_capacity(
             self, demand: List[np.ndarray], flat_slope: float = 0.1,
-            dcap: float = 10., beta: float = 0.0, fit='msa'):
+            dcap: float = 10., beta: float = 0.0, fit='msa', n_dir=2):
         """Calculate IML vs POE fragility for the collapse limit state
 
         Parameters
@@ -206,15 +208,14 @@ class Fragility:
         # number of storeys
         nst = int((demand.shape[2] - 1) / 2)
         # number of realizations
-        nsim = demand.shape[1]
+        nsim = demand.shape[n_dir]
 
         # Slice for PSDs only for collapse fragility computation
         demand = demand[:, :, nst + 1:]
 
         # Get the maximum PSDs for the building and shrink one axis of NLTHA
         demand = np.max(demand, axis=2)
-
-        if fit=='ida':
+        if fit == 'ida':
             # Initialize
             psd_max = np.max(demand) if np.max(demand) < 10. else 10.
             iml_max = np.max(self.imls)
@@ -243,8 +244,8 @@ class Fragility:
                 try:
                     flat_idx = np.where(
                         slopes == slopes[(slopes < flat_slope * slope_init)
-                                        & (slopes > 0)
-                                        & (slopes != np.inf)][0])[0][0]
+                                         & (slopes > 0)
+                                         & (slopes != np.inf)][0])[0][0]
                 except IndexError:
                     flat_idx = len(iml_spline) - 1
                     print(f"[WARNING] IDA for record {rec} not flatlining")
@@ -284,20 +285,22 @@ class Fragility:
 
             xopt_mle = optimize.fmin(
                 func=lambda var: mlefit_ida(median=var[0], dispersion=var[1],
-                                        total_count=n_rec,
-                                        count=np.array(ys[1:]), data=xs[1:]),
+                                            total_count=n_rec,
+                                            count=np.array(ys),
+                                            data=xs),
                 x0=x0, maxiter=3000, maxfun=3000, disp=False)
 
             ecdf = (xs[1:], ys[1:] / n_rec)
-            
-        elif fit=='msa':
+
+        elif fit == 'msa':
             num_gms = demand.shape[1]
             num_collapse = np.sum(demand >= dcap, axis=1)
-            enforce_non_decreasing(num_collapse)  # TODO: I am not sure about this
+            # TODO: I am not sure about this
+            enforce_non_decreasing(num_collapse)
             msa_imls = self.imls[:, 0]
             ecdf = (msa_imls, num_collapse / num_gms)
             xopt_mle = mlefit_msa(msa_imls, num_gms, num_collapse)
-        
+
         theta_mle = xopt_mle[0]
         beta_mle = (xopt_mle[1] ** 2 + beta ** 2) ** 0.5
 
@@ -305,7 +308,8 @@ class Fragility:
             np.log(self.iml_range / theta_mle) / beta_mle, loc=0, scale=1
         )
 
-        return {'median': theta_mle, 'beta': beta_mle, 'probs': list(probs), 'ecdf': ecdf}
+        return {'median': theta_mle, 'beta': beta_mle, 'probs': list(probs),
+                'ecdf': ecdf}
 
     def demolition_capacity(self, residuals: np.ndarray, median: float,
                             beta: float):
@@ -369,8 +373,8 @@ class Fragility:
 
             xopt_mle = optimize.fmin(
                 func=lambda var: mlefit_ida(median=var[0], dispersion=var[1],
-                                        total_count=num_recs,
-                                        count=counts, data=edp_range),
+                                            total_count=num_recs,
+                                            count=counts, data=edp_range),
                 x0=x0, maxiter=100, maxfun=100, disp=False)
 
             theta_mle = xopt_mle[0]
@@ -391,8 +395,8 @@ class Fragility:
         x0 = [theta_hat_mom, beta_hat_mom]
         xopt_mle = optimize.fmin(
             func=lambda var: mlefit_ida(median=var[0], dispersion=var[1],
-                                    total_count=num_recs,
-                                    count=ys, data=xs),
+                                        total_count=num_recs,
+                                        count=ys, data=xs),
             x0=x0, maxiter=100, maxfun=100, disp=False)
         theta_mle = xopt_mle[0]
         beta_mle = xopt_mle[1]

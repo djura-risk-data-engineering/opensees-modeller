@@ -10,8 +10,8 @@ from .ida import IDA
 
 from .utilities import (create_path, export_results,
                         extract_tnodes_bnodes_nspa_file)
-from .mdof.model import build_model
 from .gm_records import get_records
+from .mdof.model import build_model
 
 
 class RCMRF:
@@ -188,7 +188,7 @@ class RCMRF:
         modal_properties = self.get_modal_properties(eigenvalue_analysis)
 
         damping = modal_properties['Damping'][0]
-        omegas = modal_properties['CircFreq'][:2]
+        omegas = modal_properties['CircFreq']
         period_cond = 2 * pi / asarray(omegas)
 
         ida = IDA(
@@ -200,6 +200,7 @@ class RCMRF:
             omegas,
             period_cond,
             self.im_type,
+            dcap=self.dcap,
             analysis_time_step=self.analysis_time_step,
             sa_avg_bounds=self.sa_avg_bounds,
             max_runs=self.max_runs,
@@ -234,7 +235,7 @@ class RCMRF:
         modal_properties = self.get_modal_properties(eigenvalue_analysis)
 
         damping = modal_properties['Damping'][0]
-        omegas = modal_properties['CircFreq'][:2]
+        omegas = modal_properties['CircFreq']
 
         records = get_records(
             self.gm_folder, self.gm_filenames, self.export_dir)
