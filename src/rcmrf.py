@@ -11,7 +11,7 @@ from .ida import IDA
 from .utilities import (create_path, export_results,
                         extract_tnodes_bnodes)
 from .gm_records import get_records
-from .Zagreb.model import build_model
+from .zagreb.model import build_model
 
 
 class RCMRF:

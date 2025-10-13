@@ -6,7 +6,7 @@ import numpy as np
 
 from .solution_algorithm import SolutionAlgorithm, apply_time_series
 from .utilities import append_record, extract_tnodes_bnodes
-from .Zagreb.model import build_model
+from .zagreb.model import build_model
 
 
 class MSA:

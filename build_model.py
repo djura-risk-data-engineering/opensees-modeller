@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt  # used for plotting figures
 import opsvis as opsv  # used for plotting the models in OpenSees
 
 # Import the method to build the numerical model
-from src.Zagreb.model import build_model
+from src.zagreb.model import build_model
 
 # Add the model to the OpenSees
 build_model()

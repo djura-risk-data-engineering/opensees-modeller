@@ -3,7 +3,7 @@ import numpy as np  # used for array operations
 import matplotlib.pyplot as plt  # used for plotting
 
 # Import the method to run modal analysis for the RC frame
-from src.Zagreb.model import run_modal
+from src.zagreb.model import run_modal
 
 
 # Perform modal analysis
