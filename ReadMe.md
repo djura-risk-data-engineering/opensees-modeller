@@ -1,7 +1,7 @@
 # Step-by-step
 To clone the repository (do this only once)
 ```shell
-git clone https://github.com/davitshahnazaryan3/opensees-modeller-mp.git
+git clone https://github.com/davitshahnazaryan3/opensees-modeller.git
 ```
 
 You need to create this only once
