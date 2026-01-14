@@ -1,32 +1,31 @@
 # Step-by-step
+To install python, visit https://www.python.org/downloads/release/python-3127/
+
+To install git, visit https://git-scm.com/install/
+
+Make sure install the correct version matching your system (64-bit, Windows, macOS etc.)
+
 To clone the repository (do this only once)
 ```shell
-git clone https://github.com/davitshahnazaryan3/opensees-modeller.git
+git clone https://github.com/djura-risk-data-engineering/opensees-modeller.git
 ```
 
-You need to create this only once
+To create the virtual environment (do this only once):
 ```shell
-conda create --name venv
-conda activate venv
-conda install --file requirements.txt
+py -3.12 -m venv .venv
 ```
 
-To deactivate virutal environment
+To activate the virtual environment:
 ```shell
-conda deactivate
+.venv\Scripts\activate
 ```
 
-To run the MSA WITHOUT multiprocessor
+To upgrade pip (do this only once):
 ```shell
-python main.py
+python -m pip install --upgrade pip
 ```
 
-To run the MSA with multiprocessor
+To test if all installed correctly, run:
 ```shell
-python main_mp.py
-```
-
-To run the MSA postprocessor
-```shell
-python postprocess.py
+python build_model.py
 ```
