@@ -3,3 +3,5 @@ numpy==1.26.4
 scipy==1.14.1
 matplotlib==3.9.2
 pyDOE==0.3.8
+opsvis==1.2.31
+pandas==2.3.3
