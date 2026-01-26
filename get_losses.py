@@ -257,7 +257,9 @@ if __name__ == '__main__':
             # Assemble the losses for non-collapse cases
             demands = msa_data[rp][direction]['PFA']
             loss = 0.0  # total building loss per record for the group
-            for st in range(1, nst + 1):
+            for st in range(0, nst + 1):
+                if edp == 'PSD' and st == 0:  # consider only NS-PFA at level 0
+                    continue
                 x = np.array(demands[str(st)])
                 st_loss = multiplier * method(x, coeffs)
                 loss += st_loss  # add to total building loss
