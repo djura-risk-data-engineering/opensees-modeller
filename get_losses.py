@@ -348,10 +348,13 @@ if __name__ == '__main__':
 
     # SAVE DATA
     cache['EALR'] = eal_ratio
+    cache['EAL'] = eal_ratio * rc
+    cache['MAFC'] = mafc
     cache['RepCost'] = rc
     loss = {
         'msa-imls': imls,
-        'msa-mafe': mafe_hz,
+        'msa-mafe': mafe,
+        'msa-rp': rps,
         'E[L_S|NC,IM]': s_mean_losses_nc,
         'E[L_NS|NC,IM]': ns_mean_losses_nc,
         'E[L_T|NC,IM]': tot_mean_losses_nc,
