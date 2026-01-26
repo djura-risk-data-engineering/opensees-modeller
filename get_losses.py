@@ -9,7 +9,7 @@ from scipy import stats
 
 
 def get_mafe_ls(h: np.ndarray, s: np.ndarray,
-                theta: np.ndarray, beta: np.ndarray, add_tail=True):
+                theta: np.ndarray, beta: np.ndarray, add_tail=False):
     """
     Compute the mean annual frequency of exceedance (MAFE) of a limit state
     defined by a lognormal fragility function, by direct integration with
