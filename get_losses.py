@@ -227,6 +227,7 @@ if __name__ == '__main__':
     direction = '1'  # SRSS can used for two-directional dynamic analysis
     nst = 3  # number of storeys
     rc = 1600000  # replacement cost
+    psd_c = 2.6  # Drift threshold for collapse (DLS-4)
 
     # INITIALIZE SOME PARAMETERS
     rps = []  # Return periods (considered in MSA)
@@ -243,6 +244,8 @@ if __name__ == '__main__':
         ns_loss = 0.0  # initialise losses from non-structural comp.
         s_mean_loss = 0.0  # initialise mean losses from structural comp.
         ns_mean_loss = 0.0  # initialise mean losses from non-structural comp.
+        psd_global = np.array(msa_data[rp][direction]['PSD']['global'])
+        idx_nc = psd_global < psd_c  # Non-collapse cases
         for group in groups:
             # Get regression parameters
             method = methods.get(edp_dv[group]['regression'])
@@ -255,14 +258,14 @@ if __name__ == '__main__':
             elif 'PFA' in group:
                 edp = 'PFA'
             # Assemble the losses for non-collapse cases
-            demands = msa_data[rp][direction]['PFA']
+            demands = msa_data[rp][direction][edp]
             loss = 0.0  # total building loss per record for the group
             for st in range(0, nst + 1):
                 if edp == 'PSD' and st == 0:  # consider only NS-PFA at level 0
                     continue
                 x = np.array(demands[str(st)])
                 st_loss = multiplier * method(x, coeffs)
-                loss += st_loss  # add to total building loss
+                loss += st_loss[idx_nc]  # add to total building loss
             # Compute the mean from losses obtained for all records
             mean_loss = np.mean(loss)
             if group in s_keys:
