@@ -244,8 +244,6 @@ if __name__ == '__main__':
         ns_loss = 0.0  # initialise losses from non-structural comp.
         s_mean_loss = 0.0  # initialise mean losses from structural comp.
         ns_mean_loss = 0.0  # initialise mean losses from non-structural comp.
-        psd_global = np.array(msa_data[rp][direction]['PSD']['global'])
-        idx_nc = psd_global < psd_c  # Non-collapse cases
         for group in groups:
             # Get regression parameters
             method = methods.get(edp_dv[group]['regression'])
@@ -265,7 +263,7 @@ if __name__ == '__main__':
                     continue
                 x = np.array(demands[str(st)])
                 st_loss = multiplier * method(x, coeffs)
-                loss += st_loss[idx_nc]  # add to total building loss
+                loss += st_loss  # add to total building loss
             # Compute the mean from losses obtained for all records
             mean_loss = np.mean(loss)
             if group in s_keys:
@@ -274,7 +272,7 @@ if __name__ == '__main__':
             elif group in ns_keys:
                 ns_loss += loss
                 ns_mean_loss += mean_loss
-        # Append results for current rt
+        # Append results for current return period
         s_mean_losses_nc.append(float(s_mean_loss))  # E[L_S|NC,IM]
         ns_mean_losses_nc.append(float(ns_mean_loss))  # E[L_NS|NC,IM]
         tot_mean_losses_nc.append(float(s_mean_loss+ns_mean_loss))
@@ -357,7 +355,7 @@ if __name__ == '__main__':
     loss = {
         'msa-imls': imls,
         'msa-mafe': mafe,
-        'msa-rp': rps,
+        'msa-rps': rps,
         'E[L_S|NC,IM]': s_mean_losses_nc,
         'E[L_NS|NC,IM]': ns_mean_losses_nc,
         'E[L_T|NC,IM]': tot_mean_losses_nc,
