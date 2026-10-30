@@ -1,4 +1,4 @@
-openseespy==3.7.1.2
+openseespy==3.8.0.0
 numpy==1.26.4
 scipy==1.14.1
 matplotlib==3.9.2
