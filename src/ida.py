@@ -143,9 +143,10 @@ class IDA:
             output_path, analysis_time_step, dur, self.dcap,
             self.bnode, self.tnode, directions=directions
         )
-        accelerations, displacements, drifts, residuals = th.solve(rec)
+        accelerations, displacements, drifts, residuals, collapse_index = \
+            th.solve(rec)
         self.outputs[rec][j] = (accelerations, displacements, drifts,
-                                residuals, im[j - 1])
+                                residuals, im[j - 1], collapse_index)
         # Export results at each run
         if self.export_at_each_step:
             with open(
@@ -154,7 +155,7 @@ class IDA:
                 pickle.dump(self.outputs[rec][j], handle)
             np.savetxt(im_filename, self.im_output, delimiter=',')
 
-        return th.collapse_index
+        return collapse_index
 
     def _hunt_trace_fill(self, im_geomean, dt_record, dur, eq_name_x,
                          eq_name_y, rec, output_path, im_filename):

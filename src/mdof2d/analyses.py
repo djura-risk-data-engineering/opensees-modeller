@@ -54,7 +54,7 @@ def do_nspa(dref, mu, ctrl_node, disp_dir, n_steps, io_flag=1):
     # Initial Analysis Parameters
     # --------------------------------------------------
     ops.wipeAnalysis()
-    ops.constraints('Penalty', 1e14, 1e14)
+    ops.constraints('Transformation')
     ops.numberer('RCM')
     ops.system("UmfPack")
 
@@ -104,13 +104,13 @@ def do_nspa(dref, mu, ctrl_node, disp_dir, n_steps, io_flag=1):
         # If convergence fails, try relaxation strategies
         if ok != 0:
             print("Trying relaxed convergence..")
-            ops.test(test_type, tol_init * 0.01, iter_init * 50)
+            ops.test(test_type, tol_init * 10, iter_init * 50)
             ok = ops.analyze(1)
             ops.test(test_type, tol_init, iter_init)
 
         if ok != 0:
             print("Trying Newton with initialThenCurrent ..")
-            ops.test(test_type, tol_init * 0.01, iter_init * 50)
+            ops.test(test_type, tol_init * 10, iter_init * 50)
             ops.algorithm("Newton", "-initialThenCurrent")
             ok = ops.analyze(1)
             ops.algorithm(algorithm_type)
@@ -118,7 +118,7 @@ def do_nspa(dref, mu, ctrl_node, disp_dir, n_steps, io_flag=1):
 
         if ok != 0:
             print("Trying ModifiedNewton with initial ..")
-            ops.test(test_type, tol_init * 0.01, iter_init * 50)
+            ops.test(test_type, tol_init * 10, iter_init * 50)
             ops.algorithm("ModifiedNewton", "-initial")
             ok = ops.analyze(1)
             ops.algorithm(algorithm_type)
@@ -126,7 +126,7 @@ def do_nspa(dref, mu, ctrl_node, disp_dir, n_steps, io_flag=1):
 
         if ok != 0:
             print("Trying KrylovNewton ..")
-            ops.test(test_type, tol_init * 0.01, iter_init * 50)
+            ops.test(test_type, tol_init * 10, iter_init * 50)
             ops.algorithm("KrylovNewton")
             ok = ops.analyze(1)
             ops.algorithm(algorithm_type)

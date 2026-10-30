@@ -206,8 +206,17 @@ class MSAPostprocessor:
                     d stands for number of directions
                     s stands for number of storeys and floors
                     r stands for number of steps of the record
+                3 - residual drifts, 4 - collapse index (not available in
+                outputs of older versions)
                 """
                 data = read_pickle(self.msa / level / record)
+
+                # Flag runs that failed to converge, their responses are
+                # recorded only up to the point of failure
+                if len(data) > 4 and data[4] == -1:
+                    print(f"[WARNING] {level}/{record}: analysis failed to "
+                          "converge at peak drift of "
+                          f"{np.amax(np.abs(data[2])):.2f}%")
 
                 # SRSS
                 if n_dir == 2:

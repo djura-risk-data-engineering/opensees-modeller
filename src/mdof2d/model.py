@@ -484,7 +484,7 @@ def build_model(infills=0, outsdir="", sf=1.5):
     ops.load(1313, 0.0, 0.0, -P313, 0.0, 0.0, 0.0)
     ops.load(1413, 0.0, 0.0, -P413, 0.0, 0.0, 0.0)
 
-    ops.constraints('Penalty', 1e14, 1e14)
+    ops.constraints('Transformation')
     ops.numberer('RCM')
     ops.system('UmfPack')
     ops.test('EnergyIncr', 1e-6, 100)

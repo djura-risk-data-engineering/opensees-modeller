@@ -87,9 +87,9 @@ def apply_time_series(
                       '-factor', fy)
         op.pattern('UniformExcitation', ptagy, 2, '-accel', tstagy)
 
-    # Constraints
-    op.constraints('Penalty', 1.0e15, 1.0e15)
-    # op.constraints("Transformation")
+    # Constraints, enforced exactly (Penalty with 1e15 ill-conditions the
+    # stiffness matrix)
+    op.constraints("Transformation")
 
     op.numberer('RCM')
     op.system('UmfPack')
@@ -219,7 +219,7 @@ class SolutionAlgorithm:
                 print(f"[FAILURE] Failed at {control_time} - "
                       "Trying Newton with initial tangent & relaxed "
                       f"convergence...")
-            op.test('NormDispIncr', self.TOL * 0.1, self.ITERATIONS * 50)
+            op.test('NormDispIncr', self.TOL * 10, self.ITERATIONS * 50)
             op.algorithm('Newton', '-initial')
             dtt = self.dt
             ok = op.analyze(1, dtt)
@@ -229,7 +229,7 @@ class SolutionAlgorithm:
             if self.pflag:
                 print(f"[FAILURE] Failed at {control_time} - "
                       "Trying NewtonWithLineSearch & relaxed convergence...")
-            op.test('NormDispIncr', self.TOL * 0.1, self.ITERATIONS * 50)
+            op.test('NormDispIncr', self.TOL * 10, self.ITERATIONS * 50)
             op.algorithm('NewtonLineSearch', 0.8)
             dtt = self.dt
             ok = op.analyze(1, dtt)
@@ -241,7 +241,7 @@ class SolutionAlgorithm:
                 print(f"[FAILURE] Failed at {control_time} - "
                       "Trying Newton with initial tangent, reduced timestep &"
                       f" relaxed convergence...")
-            op.test('NormDispIncr', self.TOL * 0.1, self.ITERATIONS * 50)
+            op.test('NormDispIncr', self.TOL * 10, self.ITERATIONS * 50)
             op.algorithm('Newton', '-initial')
             dtt = 0.5 * self.dt
             ok = op.analyze(1, dtt)
@@ -252,7 +252,7 @@ class SolutionAlgorithm:
                 print(f"[FAILURE] Failed at {control_time} - "
                       "Trying NewtonWithLineSearch, reduced timestep &"
                       f" relaxed convergence...")
-            op.test('NormDispIncr', self.TOL * 0.1, self.ITERATIONS * 50)
+            op.test('NormDispIncr', self.TOL * 10, self.ITERATIONS * 50)
             op.algorithm('NewtonLineSearch', 0.8)
             dtt = 0.5 * self.dt
             ok = op.analyze(1, dtt)
@@ -289,17 +289,21 @@ class SolutionAlgorithm:
         return h
 
     def solve(self, rec: int = None
-              ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+              ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, int]:
         """Looks for a solution, performs nonlinear time history analysis
 
         Returns
         -------
-        Tuple[np.ndarray, np.ndarray, np.ndarray]
+        Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, int]
             Tuple contains:
                 Accelerations in [g]
                 Displacements in [m]
                 Drifts in [%]
                 Residual drifts in [%]
+                Collapse index
+                    -1: analysis failed to converge
+                    0: analysis completed successfully
+                    1: drift capacity exceeded (collapse)
         """
         # Create self.output_path and a temporary cache folder
         if self.output_path is not None:
@@ -460,4 +464,5 @@ class SolutionAlgorithm:
         if self.collapse_index == 1:
             print('[FAILURE] Local structure collapse.')
 
-        return accelerations, displacements, drifts, residuals
+        return (accelerations, displacements, drifts, residuals,
+                self.collapse_index)

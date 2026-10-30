@@ -4,3 +4,4 @@ dump
 data/
 __pycache__/
 .vscode
+outputs/

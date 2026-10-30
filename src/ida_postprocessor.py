@@ -315,6 +315,14 @@ class IDAPostprocessor:
                     # Select analysis results of rec and run
                     selection = data[rec - 1][run]
 
+                    # Flag runs that failed to converge, their responses are
+                    # recorded only up to the point of failure
+                    # (collapse index is not available in older outputs)
+                    if len(selection) > 5 and selection[5] == -1 and d == 0:
+                        print(f"[WARNING] Record: gm_{rec}, Run {run}: "
+                              "analysis failed to converge at peak drift of "
+                              f"{np.amax(np.abs(selection[2])):.2f}%")
+
                     # Get PFAs in g
                     pfa = np.amax(abs(selection[0][:, :]), axis=2)[d]
 

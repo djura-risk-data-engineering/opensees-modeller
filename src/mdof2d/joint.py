@@ -88,7 +88,9 @@ def joint_model(jtype, index, XYZ, M, col, bm, conc, bars, P, H, kappa, gamm,
     Kspr = 2.0 * Ec * MPa * Ac / hb  # kN/m
     rigM = int(f"1{index}")  # rigid mat
     axM = int(f"2{index}")  # elastic mat
-    ops.uniaxialMaterial('Elastic', rigM, 1e15)
+    # Rigid enough relative to Kspr (~1e7 kN/m), but not so large that it
+    # ill-conditions the stiffness matrix
+    ops.uniaxialMaterial('Elastic', rigM, 1e10)
     ops.uniaxialMaterial('Elastic', axM, Kspr)
 
     # --------------------------------------
