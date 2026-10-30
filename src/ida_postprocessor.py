@@ -130,9 +130,14 @@ class IDAPostprocessor:
 
         # Find names of 1st components
         filenames_1 = chain(gm_folder.glob('**/*name*1*'),
-                            gm_folder.glob('**/*1*name*'))
+                            gm_folder.glob('**/*1*name*'),
+                            gm_folder.glob('**/*filenames_X*'))
         filenames_2 = chain(gm_folder.glob('**/*name*2*'),
-                            gm_folder.glob('**/*2*name*'))
+                            gm_folder.glob('**/*2*name*'),
+                            gm_folder.glob('**/*filenames_Y*'))
+
+        names_1 = None
+        names_2 = None
 
         for file in filenames_1:
             names_1 = np.loadtxt(file, dtype="str", ndmin=1)
@@ -141,9 +146,17 @@ class IDAPostprocessor:
             names_2 = np.loadtxt(file, dtype="str", ndmin=1)
             break
 
+        if names_1 is None:
+            raise ValueError(
+                f"Ground motion filenames not found in {gm_folder}!"
+            )
+
         for i in range(len(durs)):
             len_1 = len(np.loadtxt(gm_folder / names_1[i]))
-            len_2 = len(np.loadtxt(gm_folder / names_2[i]))
+            # Second component is optional (e.g., 1-direction analysis)
+            len_2 = 0
+            if names_2 is not None:
+                len_2 = len(np.loadtxt(gm_folder / names_2[i]))
 
             durs[i] = dts[i] * (max(len_1, len_2) - 1)
 
