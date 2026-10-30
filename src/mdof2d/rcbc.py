@@ -778,11 +778,11 @@ def rcbc_nonduct(
         ops.element('zeroLength', int(f"1{ET}"), iDummy, iNode,
                     '-mat', rigM, hingeShTagyy, hingeShTagzz, rigM, rigM, rigM,
                     '-dir', 1, 2, 3, 4, 5, 6, '-orient', *orient,
-                    '-doRayleigh', 1)
+                    '-doRayleigh', 0)
         ops.element('zeroLength', int(f"2{ET}"), jDummy, jNode,
                     '-mat', rigM, hingeShTagyy, hingeShTagzz, rigM, rigM, rigM,
                     '-dir', 1, 2, 3, 4, 5, 6, '-orient', *orient,
-                    '-doRayleigh', 1)
+                    '-doRayleigh', 0)
 
         # Main element between dummy nodes
         ops.element('forceBeamColumn', ET, iDummy, jDummy, GT, intTag,

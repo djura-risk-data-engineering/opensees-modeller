@@ -204,7 +204,7 @@ def joint_model(jtype, index, XYZ, M, col, bm, conc, bars, P, H, kappa, gamm,
     ET = int(f"9{index}")
     ops.element('zeroLength', ET, n1, n6,
                 '-mat', rigM, rigM, axM, flYM, flXM, rigM,
-                '-dir', 1, 2, 3, 4, 5, 6, '-doRayleigh', 1)
+                '-dir', 1, 2, 3, 4, 5, 6, '-doRayleigh', 0)
 
     # --------------------------------------
     # Printouts
