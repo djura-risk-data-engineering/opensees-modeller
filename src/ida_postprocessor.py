@@ -345,11 +345,11 @@ class IDAPostprocessor:
 
                     mpsd_us[rec - 1, run - 1] = max(psd)
 
-                    # Getting the residual PSDs in %
-                    # Analysis time step
-                    dt = self.dts[rec - 1]
-                    idxres = int(self.durs[rec - 1] / dt)
-                    res_drifts = selection[2][:, :, idxres:][d]
+                    # Getting the residual PSDs in %, from the drifts recorded
+                    # during the free vibration (first column is the initial
+                    # zero). Not by step index, since the analysis time step
+                    # may vary
+                    res_drifts = selection[3][d][:, 1:]
 
                     for st in range(len(psd)):
                         if len(res_drifts[st]) > 0:
