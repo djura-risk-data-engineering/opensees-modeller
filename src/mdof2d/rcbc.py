@@ -224,12 +224,12 @@ def rcbc_nonduct(
     nu = P / (b * h * fc * MPa)
 
     # Depths to steel layers for both axes (m)
-    # bottom layer depth for bending about zz (i.e., My about local y)
+    # bottom layer depth across h, i.e., for bending about zz (Mz)
     dyy = h - dbV - cv - dbL / 2.0
-    # bottom layer depth for bending about yy (i.e., Mz about local z)
+    # bottom layer depth across b, i.e., for bending about yy (My)
     dzz = b - dbV - cv - dbL / 2.0
     # top layer depth used in shear formulas
-    d1 = dbV - cv - dbL / 2.0
+    d1 = cv + dbV + dbL / 2.0
 
     # Gross props
     Ag = b * h
@@ -362,8 +362,10 @@ def rcbc_nonduct(
     # Priestley et al. [2007], and the corresponding curvature computed.
 
     # Only the reinforcement fracture is checked here as this is anticipated
-    phi0zz = 0.08 / max(1e-12, (dzz - cp1zz))
-    phi0yy = 0.08 / max(1e-12, (dyy - cp1yy))
+    # Effective depths consistent with the moment-curvature analyses, i.e.,
+    # dyy (from h) for bending about zz, dzz (from b) for bending about yy
+    phi0zz = 0.08 / max(1e-12, (dyy - cp1zz))
+    phi0yy = 0.08 / max(1e-12, (dzz - cp1yy))
 
     # --------------------------------------
     # Max capacity (residual) and corresponding curvatures
@@ -482,12 +484,14 @@ def rcbc_nonduct(
         V_resyy = V_cyy * (1 - Sppyy * gamm_tppyy)
         V_reszz = V_czz * (1 - Sppzz * gamm_tppzz)
 
-        if V_resyy <= 0:
+        # Keep at least 10% residual strength, OpenSees can't handle (near)
+        # zero strength
+        if V_resyy < 0.1 * V_cyy:
             V_resyy = 0.1 * V_cyy
             gamm_tppyy = 1.0 / Sppyy
             gamm_myy = gamm_uyy + gamm_tppyy
 
-        if V_reszz <= 0:
+        if V_reszz < 0.1 * V_czz:
             V_reszz = 0.1 * V_czz
             gamm_tppzz = 1.0 / Sppzz
             gamm_mzz = gamm_uzz + gamm_tppzz

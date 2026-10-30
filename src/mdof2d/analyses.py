@@ -136,6 +136,9 @@ def do_nspa(dref, mu, ctrl_node, disp_dir, n_steps, io_flag=1):
             print("Performing a Hail Mary ....")
             ops.test("FixedNumIter", iter_init)
             ok = ops.analyze(1)
+            # Restore the convergence test, otherwise all the remaining steps
+            # are accepted without checking convergence
+            ops.test(test_type, tol_init, iter_init)
 
         # Update state
         temp = ops.nodeDisp(ctrl_node, disp_dir)

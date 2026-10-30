@@ -6,7 +6,7 @@ from src.utilities import export_results
 path = Path(__file__).resolve().parent
 
 ida_records = path / "data/IDA-Records"
-ida_path = path / "outputs/IDA"
+ida_path = path / "data/IDA"
 
 
 p = IDAPostprocessor(
