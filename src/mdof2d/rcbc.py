@@ -174,7 +174,7 @@ def rcbc_nonduct(
     rho_top2zz, rho_mid2zz, rho_bot2zz,
     rho_top1yy, rho_mid1yy, rho_bot1yy,
     rho_top2yy, rho_mid2yy, rho_bot2yy,
-    pfile, pflag=0
+    pfile, pflag=0, vecxz=(0.0, 1.0, 0.0)
 ):
     """
     Creates flexural (Pinching4) hinges at both ends in Mz/My,
@@ -214,6 +214,8 @@ def rcbc_nonduct(
     rho_bot2yy	Ratio of bottom rft = Asbot/bd (END 2 about yy axis)
     pflag		Print flag (optional - 1: details about hinge are printed)
     pfile		Print file -  prints the backbone properties to a specified file
+    vecxz		vecxz of the geometric transformation GT (optional), used to
+                orient the shear springs along the element local axes
     """
 
     # --------------------------------------
@@ -764,13 +766,23 @@ def rcbc_nonduct(
         rigM = int(f"100{ET}")
         ops.uniaxialMaterial('Elastic', rigM, 1e10)
 
-        # zeroLength shear hinges (materials mapped to dof 1..6)
+        # Orient the springs along the element local axes: x along the
+        # member, y = vecxz cross x (as in the geometric transformation)
+        ax, ay, az = jX - iX, jY - iY, jZ - iZ
+        vx, vy, vz = vecxz
+        orient = [ax, ay, az,
+                  vy * az - vz * ay, vz * ax - vx * az, vx * ay - vy * ax]
+
+        # zeroLength shear hinges: shear along local y (yy, acting with Mz)
+        # and local z (zz, acting with My), rigid otherwise
         ops.element('zeroLength', int(f"1{ET}"), iDummy, iNode,
-                    '-mat', hingeShTagzz, hingeShTagyy, rigM, rigM, rigM, rigM,
-                    '-dir', 1, 2, 3, 4, 5, 6, '-doRayleigh', 1)
+                    '-mat', rigM, hingeShTagyy, hingeShTagzz, rigM, rigM, rigM,
+                    '-dir', 1, 2, 3, 4, 5, 6, '-orient', *orient,
+                    '-doRayleigh', 1)
         ops.element('zeroLength', int(f"2{ET}"), jDummy, jNode,
-                    '-mat', hingeShTagzz, hingeShTagyy, rigM, rigM, rigM, rigM,
-                    '-dir', 1, 2, 3, 4, 5, 6, '-doRayleigh', 1)
+                    '-mat', rigM, hingeShTagyy, hingeShTagzz, rigM, rigM, rigM,
+                    '-dir', 1, 2, 3, 4, 5, 6, '-orient', *orient,
+                    '-doRayleigh', 1)
 
         # Main element between dummy nodes
         ops.element('forceBeamColumn', ET, iDummy, jDummy, GT, intTag,

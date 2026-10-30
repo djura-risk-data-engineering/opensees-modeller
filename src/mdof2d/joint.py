@@ -97,30 +97,16 @@ def joint_model(jtype, index, XYZ, M, col, bm, conc, bars, P, H, kappa, gamm,
     # Connection width - Equation 2.48 (O'Reilly, 2016)
     # --------------------------------------
     # X direction
-    if hcY >= bbX:
-        bjX = hcY
-    elif (bbX + 0.5 * hcX) < hcY:
-        bjX = bbX + 0.5 * hcX
-    else:
-        bjX = hcY  # fall-through safeguard
-
-    if hcY < bbX:
-        bjX = bbX
-    elif (hcY + 0.5 * hcX) < bbX:
-        bjX = hcY + 0.5 * hcX
+    if hcY >= bbX:  # column wider than beam
+        bjX = min(hcY, bbX + 0.5 * hcX)
+    else:  # beam wider than column
+        bjX = min(bbX, hcY + 0.5 * hcX)
 
     # Y direction
-    if hcX >= bbY:
-        bjY = hcX
-    elif (bbY + 0.5 * hcY) < hcX:
-        bjY = bbY + 0.5 * hcY
-    else:
-        bjY = hcX  # safeguard
-
-    if hcX < bbY:
-        bjY = bbY
-    elif (hcX + 0.5 * hcY) < bbY:
-        bjY = hcX + 0.5 * hcY
+    if hcX >= bbY:  # column wider than beam
+        bjY = min(hcX, bbY + 0.5 * hcY)
+    else:  # beam wider than column
+        bjY = min(bbY, hcX + 0.5 * hcY)
 
     # --------------------------------------
     # Flexural materials
