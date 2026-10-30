@@ -1,4 +1,5 @@
 import pickle
+import re
 from typing import List, Union, Tuple
 from pathlib import Path
 from itertools import chain
@@ -212,11 +213,15 @@ class IDAPostprocessor:
 
             for file in chain(self.ida.glob('*pickle*'),
                               self.ida.glob('*pkl*')):
-                rec_run = file.name.replace(".pickle", "").replace(
-                    "Record", "").replace("Run", "").split("_")
+                # Only the run outputs, e.g. Record1_Run2.pickle, the folder
+                # may contain other pickles (e.g. postprocessed ida.pickle)
+                rec_run = re.fullmatch(r"Record(\d+)_Run(\d+)\.(pickle|pkl)",
+                                       file.name)
+                if rec_run is None:
+                    continue
 
-                rec = int(rec_run[0]) - 1
-                run = int(rec_run[1])
+                rec = int(rec_run.group(1)) - 1
+                run = int(rec_run.group(2))
 
                 with open(file, 'rb') as f:
                     data[rec][run] = pickle.load(f)
@@ -274,6 +279,10 @@ class IDAPostprocessor:
         mrpsd_us = np.full([nrecs, nruns], np.nan)
         mtdisp_us = np.full([nrecs, nruns + 1], np.nan)
         # mtrx = np.full([nrecs, nruns + 1], np.nan)
+        # Collapse index of each run (-1: not converged, 0: completed,
+        # 1: drift capacity exceeded), 0 if not available in older outputs
+        status_us = np.zeros([nrecs, nruns], dtype='i')
+        status = np.zeros([nrecs, nruns + 1], dtype='i')
 
         mpfa = {}
         mpsd = {}
@@ -318,7 +327,9 @@ class IDAPostprocessor:
                     # Flag runs that failed to converge, their responses are
                     # recorded only up to the point of failure
                     # (collapse index is not available in older outputs)
-                    if len(selection) > 5 and selection[5] == -1 and d == 0:
+                    if len(selection) > 5:
+                        status_us[rec - 1, run - 1] = selection[5]
+                    if status_us[rec - 1, run - 1] == -1 and d == 0:
                         print(f"[WARNING] Record: gm_{rec}, Run {run}: "
                               "analysis failed to converge at peak drift of "
                               f"{np.amax(np.abs(selection[2])):.2f}%")
@@ -380,6 +391,7 @@ class IDAPostprocessor:
                     mtdisp_us[rec - 1, run - 1] = top_disp[-1]
 
                 # Sort the results
+                out[rec][d + 1]['status'] = status_us[rec - 1, :].tolist()
                 out[rec][d + 1]['PFA']['global'] = mpfa_us[rec - 1, :].tolist()
                 out[rec][d + 1]['PSD']['global'] = mpsd_us[rec - 1, :].tolist()
                 out[rec][d + 1]['RPSD']['global'] = \
@@ -395,6 +407,7 @@ class IDAPostprocessor:
                 mpfa[d][rec - 1, 1:] = mpfa_us[rec - 1, :][idx[rec - 1]]
                 mpsd[d][rec - 1, 1:] = mpsd_us[rec - 1, :][idx[rec - 1]]
                 mtdisp[d][rec - 1, 1:] = mtdisp_us[rec - 1, :][idx[rec - 1]]
+                status[rec - 1, 1:] = status_us[rec - 1, :][idx[rec - 1]]
 
         # Fit the splines to the data
         for d in range(n_dir):
@@ -422,6 +435,7 @@ class IDAPostprocessor:
                 "im_spl": im_spl.copy(), "disp": disps.copy(),
                 "im": im.copy(), "im_qtile": im_qtile.copy(),
                 "mtdisp": self.MTDISP_RANGE.copy(), "drift": drifts.copy(),
+                "status": status.copy(),
                 "mpsd": self.MPSD_RANGE.copy(),
                 "im_spl_psd": im_spl_psd.copy(),
                 "im_qtile_psd": im_qtile_psd.copy()
