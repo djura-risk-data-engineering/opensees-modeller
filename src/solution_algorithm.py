@@ -19,7 +19,8 @@ def apply_time_series(
     tstagx: int = 51,
     tstagy: int = 52,
     ptagx: int = 10,
-    ptagy: int = 20
+    ptagy: int = 20,
+    damping_type: str = 'Modal'
 ) -> None:
     """Applies time series
 
@@ -47,21 +48,53 @@ def apply_time_series(
         Uniform excitation load pattern tag for X direction, by default 10
     ptagy : int, optional
         Uniform excitation load pattern tag for Y direction, by default 20
+    damping_type : str, optional
+        Damping model, by default 'Modal-adjusted'
+            'Rayleigh': mass and last-committed stiffness proportional,
+            calibrated at the 1st and 3rd modes
+            'Modal': modal damping in all modes in omegas
+            'Modal-adjusted': initial stiffness proportional damping equal to
+                the target at 10 x omega_1 (damps the high-frequency modes),
+                plus modal damping for the rest in all modes in omegas
+        Elements with -doRayleigh 0 (e.g., rigid links and hinges) do not
+        contribute to the stiffness proportional part
     """
     # Delete the old analysis and all of its component objects
     op.wipeAnalysis()
 
     omegas = np.array(omegas)
 
-    w1 = omegas[0]
-    w2 = omegas[2]
-    a0 = 2 * w1 * w2 / (w2 ** 2 - w1 ** 2) * \
-        (w2 * damping - w1 * damping)
-    a1 = 2 * w1 * w2 / (w2 ** 2 - w1 ** 2) * \
-        (-damping / w2 + damping / w1)
+    if damping_type == 'Rayleigh':
+        w1 = omegas[0]
+        w2 = omegas[2]
+        a0 = 2 * w1 * w2 / (w2 ** 2 - w1 ** 2) * \
+            (w2 * damping - w1 * damping)
+        a1 = 2 * w1 * w2 / (w2 ** 2 - w1 ** 2) * \
+            (-damping / w2 + damping / w1)
+        #           M    KT   KI  Kn
+        op.rayleigh(a0, 0.0, 0.0, a1)
 
-    # Rayleigh damping
-    op.rayleigh(a0, 0.0, 0.0, a1)
+    elif damping_type == 'Modal':
+        num_modes = len(omegas)
+        # Modal damping needs the eigen solution in the current domain
+        op.eigen(num_modes)
+        op.modalDamping(*[damping] * num_modes)
+
+    elif damping_type == 'Modal-adjusted':
+        num_modes = len(omegas)
+        # Modal damping needs the eigen solution in the current domain
+        op.eigen(num_modes)
+        # Stiffness proportional part, equal to the target ratio at
+        # 10 x omega_1 and larger above it (damps the high-frequency modes)
+        omega_hf = 10 * omegas[0]
+        a1 = 2 * damping / omega_hf
+        op.rayleigh(0.0, 0.0, a1, 0.0)  # initial stiffness, never negative
+        # Modal part, the rest, so that the total is the target in each mode
+        ratios = [max(damping - a1 * w / 2, 0.0) for w in omegas]
+        op.modalDamping(*ratios)
+
+    else:
+        raise ValueError(f"Unknown damping_type '{damping_type}'")
 
     # Time series excitation
     # op.timeSeries('Path', tstagx, '-dt', dt,
@@ -98,9 +131,18 @@ def apply_time_series(
 class SolutionAlgorithm:
     g = 9.81
     ITERATIONS = 50
-    ALGORITHM_TYPE = 'KrylovNewton'
-    TEST_TYPE = 'NormDispIncr'
-    TOL = 1e-04
+    ALGORITHM_TYPE = ['SecantNewton']
+    # Converged only when both the displacement increment and the unbalanced
+    # force are small, so that steps with a large residual are not accepted.
+    # NOTE: always pass the print flag and nothing after it, the openseespy
+    # parser overwrites the max iterations with the norm type otherwise
+    TEST_TYPE = 'NormDispAndUnbalance'
+    TOL = 1e-06  # displacement increment norm [m]
+    TOL_R = 1e-04  # unbalanced force norm [kN]
+    # INTEGRATOR_TYPE = ['Newmark', 0.5, 0.25]
+    INTEGRATOR_TYPE = ['TRBDF2']  # dissipates high-frequency response
+    # Time step factors tried in descending order when a step fails
+    DT_FACTORS = [1.0, 0.5, 0.25, 0.1, 0.01]
     collapse_index = 0
 
     def __init__(
@@ -157,112 +199,112 @@ class SolutionAlgorithm:
     def _set_analysis(self):
         """Set up initial analysis parameters
         """
-        op.test(self.TEST_TYPE, self.TOL, self.ITERATIONS)
-        op.algorithm(self.ALGORITHM_TYPE)
-        op.integrator('Newmark', 0.5, 0.25)
+        self._set_test(self.TOL, self.ITERATIONS)
+        op.algorithm(*self.ALGORITHM_TYPE)
+        op.integrator(*self.INTEGRATOR_TYPE)
         op.analysis('Transient')
 
-    def _algorithm(self, ok: int, control_time: float) -> None:
-        """Algorithms necessary to perform the analysis
+    def _set_test(self, tol: float, iterations: int) -> None:
+        """Sets the convergence test, scaling the force tolerance with tol
 
         Parameters
         ----------
-        ok : int
-            Analysis performed successfully or not, 0 stands for ok,
-            != stands for not ok
-        control_time : float
-            Control time in seconds
+        tol : float
+            Tolerance on the displacement increment norm
+        iterations : int
+            Maximum number of iterations before returning failure
         """
-        dtt = self.dt
-        if ok:
-            if self.pflag:
-                print(f"[FAILURE] Failed at {control_time} of {self.dur}"
-                      " seconds")
-        if ok:
-            if self.pflag:
-                print(f"[FAILURE] Failed at {control_time} - "
-                      "Reduced timestep by half...")
-            dtt = 0.5 * self.dt
-            ok = op.analyze(1, dtt)
-        if ok:
-            if self.pflag:
-                print(f"[FAILURE] Failed at {control_time} - "
-                      "Reduced timestep by quarter...")
-            dtt = 0.25 * self.dt
-            ok = op.analyze(1, dtt)
-        if ok:
-            if self.pflag:
-                print(
-                    f"[FAILURE] Failed at {control_time} - Trying Broyden...")
-            op.algorithm('Broyden', 8)
-            dtt = self.dt
-            ok = op.analyze(1, dtt)
-            op.algorithm(self.ALGORITHM_TYPE)
-        if ok:
-            if self.pflag:
-                print(f"[FAILURE] Failed at {control_time} - "
-                      "Trying Newton with initial tangent...")
-            op.algorithm('Newton', '-initial')
-            dtt = self.dt
-            ok = op.analyze(1, dtt)
-            op.algorithm(self.ALGORITHM_TYPE)
-        if ok:
-            if self.pflag:
-                print(f"[FAILURE] Failed at {control_time} - "
-                      "Trying NewtonWithLineSearch...")
-            op.algorithm('NewtonLineSearch', 0.8)
-            dtt = self.dt
-            ok = op.analyze(1, self.dt)
-            op.algorithm(self.ALGORITHM_TYPE)
-        if ok:
-            if self.pflag:
-                print(f"[FAILURE] Failed at {control_time} - "
-                      "Trying Newton with initial tangent & relaxed "
-                      f"convergence...")
-            op.test('NormDispIncr', self.TOL * 10, self.ITERATIONS * 50)
-            op.algorithm('Newton', '-initial')
-            dtt = self.dt
-            ok = op.analyze(1, dtt)
-            op.test(self.TEST_TYPE, self.TOL, self.ITERATIONS)
-            op.algorithm(self.ALGORITHM_TYPE)
-        if ok:
-            if self.pflag:
-                print(f"[FAILURE] Failed at {control_time} - "
-                      "Trying NewtonWithLineSearch & relaxed convergence...")
-            op.test('NormDispIncr', self.TOL * 10, self.ITERATIONS * 50)
-            op.algorithm('NewtonLineSearch', 0.8)
-            dtt = self.dt
-            ok = op.analyze(1, dtt)
-            op.test(self.TEST_TYPE, self.TOL, self.ITERATIONS)
-            op.algorithm(self.ALGORITHM_TYPE)
-        # Next, halve the timestep with both algorithm and tolerance reduction
-        if ok:
-            if self.pflag:
-                print(f"[FAILURE] Failed at {control_time} - "
-                      "Trying Newton with initial tangent, reduced timestep &"
-                      f" relaxed convergence...")
-            op.test('NormDispIncr', self.TOL * 10, self.ITERATIONS * 50)
-            op.algorithm('Newton', '-initial')
-            dtt = 0.5 * self.dt
-            ok = op.analyze(1, dtt)
-            op.test(self.TEST_TYPE, self.TOL, self.ITERATIONS)
-            op.algorithm(self.ALGORITHM_TYPE)
-        if ok:
-            if self.pflag:
-                print(f"[FAILURE] Failed at {control_time} - "
-                      "Trying NewtonWithLineSearch, reduced timestep &"
-                      f" relaxed convergence...")
-            op.test('NormDispIncr', self.TOL * 10, self.ITERATIONS * 50)
-            op.algorithm('NewtonLineSearch', 0.8)
-            dtt = 0.5 * self.dt
-            ok = op.analyze(1, dtt)
-            op.test(self.TEST_TYPE, self.TOL, self.ITERATIONS)
-            op.algorithm(self.ALGORITHM_TYPE)
-        if ok:
-            if self.pflag:
-                print(f"[FAILURE] Failed at {control_time} - exit analysis...")
-            self.collapse_index = -1
+        op.test(self.TEST_TYPE, tol, tol / self.TOL * self.TOL_R,
+                iterations, 0)
+
+    def _reset_solver(self) -> None:
+        """Restores the original test and algorithm, so that the settings
+        of a recovered step are not carried over to the next steps"""
+        self._set_test(self.TOL, self.ITERATIONS)
+        op.algorithm(*self.ALGORITHM_TYPE)
+
+    def _try_algorithms(self, tol: float, dt: float,
+                        iterations: int = 50) -> int:
+        """Tries alternative algorithms to perform a single analysis step
+
+        Parameters
+        ----------
+        tol : float
+            Tolerance on the displacement increment norm
+        dt : float
+            Analysis time step
+        iterations : int, optional
+            Maximum number of iterations, by default 50
+
+        Returns
+        -------
+        int
+            0 if the step converged, != 0 otherwise
+        """
+        self._set_test(tol, iterations)
+        op.algorithm('KrylovNewton')
+        ok = op.analyze(1, dt)
+        if ok != 0:
+            op.algorithm('NewtonLineSearch', '-InitialInterpolated', 0.8)
+            ok = op.analyze(1, dt)
+        if ok != 0:
+            op.algorithm('BFGS')
+            ok = op.analyze(1, dt)
         return ok
+
+    def _do_single_analysis_step(self, dt: float) -> Tuple[int, float, float]:
+        """Performs a single analysis step, if it fails tries alternative
+        algorithms, then smaller time steps, and relaxed tolerances as a last
+        resort. After a reduced time step, the time step is increased back
+        gradually.
+
+        Parameters
+        ----------
+        dt : float
+            Time step used for the previous step
+
+        Returns
+        -------
+        Tuple[int, float, float]
+            0 if the step converged, != 0 otherwise
+            Current time
+            Time step used for this step
+        """
+        dt_values = sorted([f * self.dt for f in self.DT_FACTORS],
+                           reverse=True)
+        dt_idx = dt_values.index(dt)
+
+        # Gradually increase the time step back after a reduced one
+        if dt_idx != 0:
+            dt_idx -= 1
+            dt = dt_values[dt_idx]
+
+        # Do the analysis with the original test and algorithm
+        self._reset_solver()
+        ok = op.analyze(1, dt)
+
+        # Try alternative algorithms with the same time step first
+        if ok != 0:
+            ok = self._try_algorithms(self.TOL, dt)
+
+        # If still failing, keep decreasing the time step
+        while ok != 0 and dt_idx < len(dt_values) - 1:
+            dt_idx += 1
+            dt = dt_values[dt_idx]
+            ok = self._try_algorithms(self.TOL, dt)
+
+        # Relax the tolerances as a last resort (10 x TOL and 10 x TOL_R),
+        # the next step starts again from the original ones
+        if ok != 0:
+            ok = self._try_algorithms(10 * self.TOL, dt, 100)
+
+        if ok != 0:
+            if self.pflag:
+                print(f"[FAILURE] Failed at {op.getTime()} of {self.dur} "
+                      "seconds - exit analysis...")
+            self.collapse_index = -1
+
+        return ok, op.getTime(), dt
 
     def _verify_against_zerolength(self) -> np.ndarray:
         """Verify that the elements of the model are not of zero length
@@ -357,18 +399,14 @@ class SolutionAlgorithm:
         residuals = np.zeros((self.directions, nst, 1))
 
         h = self._verify_against_zerolength()
+        dt_cur = self.dt
 
         # Run the actual analysis now
         while self.collapse_index == 0 and control_time <= self.dur and \
                 not ok:
-            # Start analysis
-            ok = op.analyze(1, self.dt)
-            control_time = op.getTime()
-
-            # If the analysis fails, try the following changes to achieve
-            # convergence
-            # Analysis will be slower in here though...
-            ok = self._algorithm(ok, control_time)
+            # Analysis step, if it fails alternative algorithms, smaller time
+            # steps and relaxed tolerances are tried
+            ok, control_time, dt_cur = self._do_single_analysis_step(dt_cur)
 
             # Recorders
             temp_accel = np.zeros((self.directions, nst + 1, 1))
