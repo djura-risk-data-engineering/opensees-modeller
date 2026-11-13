@@ -1,0 +1,6 @@
+openseespy==3.8.0.0
+numpy==2.5.4
+scipy==1.18.1
+matplotlib==3.11.2
+pyDOE==1.6.0
+opsvis==1.3.7
